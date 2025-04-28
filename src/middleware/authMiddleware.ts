@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 import userModel from '../models/userModel';
-import { UnauthorizedError } from '../utils/errors';
+import { UnauthorizedError, ForbiddenError } from '../utils/errors';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -36,4 +36,18 @@ const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
   }
 };
 
-export { protect };
+const adminOnly = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (req.user?.vaiTro !== 'admin') {
+      throw new ForbiddenError('Chỉ admin mới có quyền truy cập');
+    }
+    next();
+  } catch (error: any) {
+    res.status(error.statusCode || 403).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export { protect, adminOnly };
