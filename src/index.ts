@@ -4,6 +4,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import authRoutes from './routes/authRoutes';
+import ingredientRoutes from './routes/ingredientRoutes';
+import categoryRoutes from './routes/categoryRoutes';
+import toppingRoutes from './routes/toppingRoutes';
+import productRoutes from './routes/productRoutes';
 
 dotenv.config();
 
@@ -17,6 +21,10 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/ingredients', ingredientRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/toppings', toppingRoutes);
+app.use('/api/products', productRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {
