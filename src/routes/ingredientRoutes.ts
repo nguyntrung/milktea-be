@@ -10,7 +10,7 @@ router.put('/:id', protect, adminOnly, ingredientController.update);
 router.delete('/:id', protect, adminOnly, ingredientController.delete);
 
 // Routes accessible to all authenticated users
-router.get('/', protect, ingredientController.getAll);
+router.get('/', ingredientController.getAll);
 router.get('/:id', protect, ingredientController.getById);
 
 export default router;

@@ -7,11 +7,7 @@ export interface IIngredient extends Document {
   soLuongTon: number;
   donVi: string;
   nguongCanhBao: number;
-  nhaCungCap: {
-    ten: string;
-    lienHe: string;
-    diaChi: string;
-  };
+  maNhaCungCap: string;
   ngayTao: Date;
   ngayCapNhat: Date;
 }
@@ -21,24 +17,16 @@ export interface IngredientInput {
   soLuongTon: number;
   donVi: string;
   nguongCanhBao: number;
-  nhaCungCap: {
-    ten: string;
-    lienHe: string;
-    diaChi: string;
-  };
+  maNhaCungCap: string;
 }
 
 // Define schema
 const ingredientSchema = new Schema<IIngredient>({
   ten: { type: String, required: true },
-  soLuongTon: { type: Number },
+  soLuongTon: { type: Number, required: true },
   donVi: { type: String, required: true },
   nguongCanhBao: { type: Number, required: true },
-  nhaCungCap: {
-    ten: { type: String },
-    lienHe: { type: String },
-    diaChi: { type: String },
-  },
+  maNhaCungCap: { type: String, ref: 'NhaCungCap', required: true },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });
