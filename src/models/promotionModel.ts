@@ -14,7 +14,6 @@ export interface IPromotion extends Document {
   giaTri: {
     phanTram?: number;                // % giảm giá (nếu là giảm %)
     tienGiam?: number;                // Số tiền giảm (nếu là giảm tiền)
-    sanPhamTang?: string[];           // ID sản phẩm tặng
     diemTang?: number;                // Số điểm tặng
   };
   
@@ -273,11 +272,6 @@ promotionSchema.pre('save', function(next) {
         break;
       case LoaiKhuyenMai.GIAM_TIEN:
         if (!this.giaTri.tienGiam || this.giaTri.tienGiam <= 0) {
-          return false;
-        }
-        break;
-      case LoaiKhuyenMai.TANG_SAN_PHAM:
-        if (!this.giaTri.sanPhamTang || this.giaTri.sanPhamTang.length === 0) {
           return false;
         }
         break;

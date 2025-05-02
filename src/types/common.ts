@@ -43,9 +43,7 @@ export enum VaiTro {
 export enum LoaiKhuyenMai {
   GIAM_PHAN_TRAM = 'giamPhanTram',     // Giảm theo % 
   GIAM_TIEN = 'giamTien',              // Giảm trực tiếp số tiền
-  MUA_1_TANG_1 = 'mua1Tang1',          // Mua 1 tặng 1
-  TANG_SAN_PHAM = 'tangSanPham',       // Tặng sản phẩm
-  TANG_DIEM = 'tangDiem',              // Tặng điểm thành viên
+  TANG_DIEM = 'tangDiem'               // Tặng điểm thành viên
 }
 
 // Đối tượng áp dụng khuyến mãi
@@ -92,8 +90,8 @@ export enum TrangThaiDonDatNguyenLieu {
   DA_DUYET = 'daDuyet',          // Đơn đặt đã được duyệt
   CHO_HANG_VE = 'choHangVe',     // Đã đặt hàng, đang chờ hàng về
   DA_NHAN_HANG = 'daNhanHang',   // Đã nhận hàng đầy đủ
-  HUY_DON = 'huyDon',            // Đơn hàng đã bị hủy
-  HOAN_THANH = 'hoanThanh'       // Đơn hàng đã hoàn thành
+  HOAN_THANH = 'hoanThanh',       // Đơn hàng đã hoàn thành
+  HUY_DON = 'huyDon'            // Đơn hàng đã bị hủy
 }
 
 // Định nghĩa enum cho trạng thái thanh toán
