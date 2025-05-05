@@ -3,7 +3,7 @@ import ingredientService from '../services/ingredientService';
 import { IngredientInput } from '../models/ingredientModel';
 
 class IngredientController {
-  async create(req: Request, res: Response) {
+  async create(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
     try {
       const data: IngredientInput = req.body;
       const ingredient = await ingredientService.create(data);
@@ -19,7 +19,7 @@ class IngredientController {
     }
   }
 
-  async getAll(req: Request, res: Response) {
+  async getAll(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
     try {
       const ingredients = await ingredientService.getAll();
       res.status(200).json({
@@ -34,7 +34,7 @@ class IngredientController {
     }
   }
 
-  async getById(req: Request, res: Response) {
+  async getById(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
     try {
       const id = req.params.id;
       const ingredient = await ingredientService.getById(id);
@@ -50,7 +50,7 @@ class IngredientController {
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
     try {
       const id = req.params.id;
       const data: Partial<IngredientInput> = req.body;
@@ -67,7 +67,7 @@ class IngredientController {
     }
   }
 
-  async delete(req: Request, res: Response) {
+  async delete(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
     try {
       const id = req.params.id;
       const result = await ingredientService.delete(id);
