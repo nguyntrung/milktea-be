@@ -5,9 +5,9 @@ import { protect, adminOnly } from '../middleware/authMiddleware';
 const router = express.Router();
 
 // Routes with admin-only access for create, update, delete
-router.post('/', protect, adminOnly, productController.create);
+router.post('/', productController.create);
 router.put('/:id', protect, adminOnly, productController.update);
-router.delete('/:id', protect, adminOnly, productController.delete);
+router.delete('/:id', productController.delete);
 
 // Routes accessible to all authenticated users
 router.get('/', productController.getAll);
