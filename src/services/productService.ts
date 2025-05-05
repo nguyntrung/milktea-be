@@ -6,7 +6,7 @@ import { BadRequestError } from '../utils/errors';
 
 class ProductService {
   async create(data: ProductInput) {
-    const { ten, maDanhMuc, nguyenLieu, toppingCoSan, toppingCoTheThem } = data;
+    const { ten, maDanhMuc, luaChonSize, toppingCoTheThem } = data;
 
     // Check if product exists
     const existingProduct = await productModel.findOne({ ten });
@@ -20,23 +20,17 @@ class ProductService {
       throw new BadRequestError('Danh mục không tồn tại');
     }
 
-    // Validate nguyenLieu
-    for (const item of nguyenLieu) {
-      const ingredient = await ingredientModel.findById(item.maNguyenLieu);
-      if (!ingredient) {
-        throw new BadRequestError(`Nguyên liệu ${item.maNguyenLieu} không tồn tại`);
-      }
-    }
-
-    // Validate toppingCoSan and toppingCoTheThem
-    if (toppingCoSan) {
-      for (const toppingId of toppingCoSan) {
-        const topping = await toppingModel.findById(toppingId);
-        if (!topping) {
-          throw new BadRequestError(`Topping ${toppingId} không tồn tại`);
+    // Validate thanhPhan in luaChonSize
+    for (const size of luaChonSize) {
+      for (const item of size.thanhPhan) {
+        const ingredient = await ingredientModel.findById(item.maNguyenLieu);
+        if (!ingredient) {
+          throw new BadRequestError(`Nguyên liệu ${item.maNguyenLieu} không tồn tại`);
         }
       }
     }
+
+    // Validate toppingCoTheThem
     if (toppingCoTheThem) {
       for (const toppingId of toppingCoTheThem) {
         const topping = await toppingModel.findById(toppingId);
@@ -59,8 +53,7 @@ class ProductService {
     return await productModel
       .find()
       .populate('maDanhMuc', 'ten')
-      .populate('nguyenLieu.maNguyenLieu', 'ten')
-      .populate('toppingCoSan', 'ten gia')
+      .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
       .populate('toppingCoTheThem', 'ten gia')
       .sort({ ngayTao: -1 });
   }
@@ -69,8 +62,7 @@ class ProductService {
     const product = await productModel
       .findById(id)
       .populate('maDanhMuc', 'ten')
-      .populate('nguyenLieu.maNguyenLieu', 'ten')
-      .populate('toppingCoSan', 'ten gia')
+      .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
       .populate('toppingCoTheThem', 'ten gia');
     if (!product) {
       throw new BadRequestError('Sản phẩm không tồn tại');
@@ -92,25 +84,19 @@ class ProductService {
       }
     }
 
-    // Validate nguyenLieu if provided
-    if (data.nguyenLieu) {
-      for (const item of data.nguyenLieu) {
-        const ingredient = await ingredientModel.findById(item.maNguyenLieu);
-        if (!ingredient) {
-          throw new BadRequestError(`Nguyên liệu ${item.maNguyenLieu} không tồn tại`);
+    // Validate thanhPhan in luaChonSize if provided
+    if (data.luaChonSize) {
+      for (const size of data.luaChonSize) {
+        for (const item of size.thanhPhan) {
+          const ingredient = await ingredientModel.findById(item.maNguyenLieu);
+          if (!ingredient) {
+            throw new BadRequestError(`Nguyên liệu ${item.maNguyenLieu} không tồn tại`);
+          }
         }
       }
     }
 
-    // Validate toppingCoSan and toppingCoTheThem if provided
-    if (data.toppingCoSan) {
-      for (const toppingId of data.toppingCoSan) {
-        const topping = await toppingModel.findById(toppingId);
-        if (!topping) {
-          throw new BadRequestError(`Topping ${toppingId} không tồn tại`);
-        }
-      }
-    }
+    // Validate toppingCoTheThem if provided
     if (data.toppingCoTheThem) {
       for (const toppingId of data.toppingCoTheThem) {
         const topping = await toppingModel.findById(toppingId);
@@ -131,8 +117,7 @@ class ProductService {
     const updatedProduct = await productModel
       .findByIdAndUpdate(id, { ...data, ngayCapNhat: new Date() }, { new: true })
       .populate('maDanhMuc', 'ten')
-      .populate('nguyenLieu.maNguyenLieu', 'ten')
-      .populate('toppingCoSan', 'ten gia')
+      .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
       .populate('toppingCoTheThem', 'ten gia');
     return updatedProduct;
   }
