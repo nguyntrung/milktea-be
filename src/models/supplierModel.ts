@@ -6,6 +6,7 @@ export interface ISupplier extends Document {
   ten: string;
   diaChi: string;
   lienHe: string;
+  hoatDong: boolean;
   ngayTao: Date;
   ngayCapNhat: Date;
 }

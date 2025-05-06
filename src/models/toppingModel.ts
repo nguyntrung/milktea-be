@@ -1,10 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { DonViTinh } from '../types/common';
 
 // Define types
 export interface ITopping extends Document {
   _id: string;
   ten: string;
   gia: number;
+  donViTinh: DonViTinh;
+  soLuongMotPhan: number;
   hoatDong: boolean;
   ngayTao: Date;
   ngayCapNhat: Date;

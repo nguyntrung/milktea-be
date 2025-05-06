@@ -1,22 +1,17 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { TrangThaiDonDatNguyenLieu } from '../types/common';
 
 export interface IOrderIngredient extends Document {
   _id: string;
   maNhaCungCap: string;
   ngayDat: Date;
-  thoiGianCanGiao: Date;
-  nguyenLieu: {
-    maNguyenLieu: string;
-    soLuong: number;
-    donGia: number;
-    thanhTien: number;
-  }[];
-  tongTien: number;
-  ngayNhap?: Date;
-  trangThai: 'DATAO' | 'DAXACNHAN' | 'DAGIAO' | 'DATHANHTOAN';
-  ghiChu?: string;
   nguoiDat: string;
+  ngayNhap?: Date;
   nguoiNhap?: string;
+  thoiGianCanGiao: Date;
+  trangThai: TrangThaiDonDatNguyenLieu;
+  tongTien: number;
+  ghiChu?: string;
   ngayTao: Date;
   ngayCapNhat: Date;
 }

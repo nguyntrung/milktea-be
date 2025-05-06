@@ -1,16 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { DonViTinh } from '../types/common';
 
 // Define types
 export interface IIngredient extends Document {
   _id: string;
   ten: string;
-  soLuong: {
-    thoiGian: Date;
-    soLuongTon: number;
-  }[];
-  donVi: string;
-  nguongCanhBao: number;
+  donViTinh: DonViTinh;
   maNhaCungCap: string | string[];
+  hoatDong: boolean;
   ngayTao: Date;
   ngayCapNhat: Date;
 }
