@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { GioiTinh, LoaiGiaoDich, VaiTro } from '../types/common';
 
 // Define types
 export interface IUser extends Document {
@@ -14,11 +15,27 @@ export interface IUser extends Document {
 }
 
 export interface RegisterInput {
+  _id: string;
   email: string;
   matKhau: string;
   ten: string;
+  ngaySinh: Date;
+  gioiTinh: GioiTinh;
   soDienThoai?: string;
+  diemTichLuy: number;
+  lichSuDiem: {
+    thoiGian: Date;
+    diem: number;
+    noiDUng: string;
+    diemConLai: number;
+    loaiGiaoDich: LoaiGiaoDich;
+  }[];
   diaChi?: string;
+  khuyenMaiDaSuDung: string[];
+  hoatDong: boolean;
+  vaiTro: VaiTro;
+  ngayTao: Date;
+  ngayCapNhat: Date;
 }
 
 export interface LoginInput {

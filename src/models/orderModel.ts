@@ -1,48 +1,26 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { PhuongThucThanhToan, TrangThaiDonHang, TrangThaiThanhToan } from '../types/common';
 
 export interface IOrder extends Document {
-  maNguoiDung: string;
-  sanPham: {
-    maSanPham: string;
-    kichCo: {
-      nho: number;
-      vua: number;
-      lon: number;
-    };
-    doNgot: {
-      it: number;
-      vua: number;
-      nhieu: number;
-    };
-    luongDa: {
-      it: number;
-      vua: number;
-      nhieu: number;
-    };
-    topping: string[];
-    soLuong: number;
-    gia: number;
-  }[];
-  tongGia: number;
-  giamGia?: {
+  maKhachHang: string;
+  maNhanVien: string;
+  ngayLap: Date;
+  tongTienHang: number;
+  khuyenMai: {
     maKhuyenMai: string;
-    soTien: number;
+    giaTri: number;
+  }[];
+  tongTien: number;
+  nguoiGiao: string;
+  thongTinNguoiNhan: string;
+  thanhToan: {
+    phuongThucThanhToan: PhuongThucThanhToan;
+    trangThaiThanhToan: TrangThaiThanhToan;
   };
-  trangThai: {
-    choXuLy: number;
-    dangChuanBi: number;
-    dangGiao: number;
-    daGiao: number;
-    daHuy: number;
-  };
-  diaChiGiaoHang: string;
-  phuongThucThanhToan: {
-    theTinDung: number;
-    momo: number;
-    zalopay: number;
-    vnpay: number;
-    cod: number;
-  };
+  lichSuTrangThai: {
+    thoiGian: Date;
+    trangThaiDonHang: TrangThaiDonHang;
+  }[];
   ghiChu: string;
   ngayTao: Date;
   ngayCapNhat: Date;
