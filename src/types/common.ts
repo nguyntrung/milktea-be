@@ -12,27 +12,6 @@ export enum DonViTinh {
   LIT = 'lít'
 }
 
-// Định nghĩa các enum cho kích cỡ
-export enum KichCo {
-  NHO = 'nho',
-  VUA = 'vua',
-  LON = 'lon'
-}
-
-// Định nghĩa các enum cho độ ngọt
-export enum DoNgot {
-  IT = 'it',
-  VUA = 'vua',
-  NHIEU = 'nhieu'
-}
-
-// Định nghĩa các enum cho lượng đá
-export enum LuongDa {
-  IT = 'it',
-  VUA = 'vua',
-  NHIEU = 'nhieu'
-}
-
 // Định nghĩa các enum cho vai trò người dùng
 export enum VaiTro {
   USER = 'user',
@@ -43,15 +22,11 @@ export enum VaiTro {
 export enum LoaiKhuyenMai {
   GIAM_PHAN_TRAM = 'giamPhanTram',     // Giảm theo % 
   GIAM_TIEN = 'giamTien',              // Giảm trực tiếp số tiền
-  TANG_DIEM = 'tangDiem'               // Tặng điểm thành viên
 }
 
 // Đối tượng áp dụng khuyến mãi
 export enum DoiTuongKhuyenMai {
-  TAT_CA = 'tatCa',                    // Áp dụng cho tất cả
-  NGUOI_DUNG = 'nguoiDung',            // Áp dụng cho người dùng cụ thể
   SAN_PHAM = 'sanPham',                // Áp dụng cho sản phẩm cụ thể
-  DANH_MUC = 'danhMuc',                // Áp dụng cho danh mục sản phẩm
   HOA_DON = 'hoaDon',                  // Áp dụng cho hóa đơn thỏa điều kiện
 }
 
@@ -110,14 +85,8 @@ export enum GioiTinh {
   KHAC = 'khac'    // Khác/Không xác định
 }
 
-// Type cho đơn vị tính trong schema
-export type DonViTinhSchema = {
-  [key in DonViTinh]?: number;
-};
-
-// Interface cho thông tin đơn vị tính có thể tái sử dụng
-export interface IDonViTinhInfo {
-  maLoaiDonVi: string; // Mã đơn vị tính (từ enum DonViTinh)
-  tenDonVi: string;    // Tên hiển thị
-  giaTri: number;      // Giá trị quy đổi (nếu cần)
+// Định nghĩa enum cho loại giao dịch điểm
+export enum LoaiGiaoDich {
+  CONG = 'cong',     // Cộng
+  TRU = 'tru',       // Trừ
 }

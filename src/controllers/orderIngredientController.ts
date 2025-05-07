@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
-import ingredientService from '../services/ingredientService';
-import { IngredientInput } from '../models/ingredientModel';
+import orderIngredientService from '../services/orderIngredientService';
+import { OrderIngredientInput } from '../models/orderIngredientModel'; 
 
-class IngredientController {
-  async create(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+class OrderIngredientController {
+  async create(req: Request, res: Response) {
     try {
-      const data: IngredientInput = req.body;
-      const ingredient = await ingredientService.create(data);
+      const data: OrderIngredientInput = req.body;
+      const order = await orderIngredientService.create(data);
       res.status(201).json({
         success: true,
-        data: ingredient,
+        data: order,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -19,12 +19,12 @@ class IngredientController {
     }
   }
 
-  async getAll(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async getAll(req: Request, res: Response) {
     try {
-      const ingredients = await ingredientService.getAll();
+      const orders = await orderIngredientService.getAll();
       res.status(200).json({
         success: true,
-        data: ingredients,
+        data: orders,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -34,13 +34,13 @@ class IngredientController {
     }
   }
 
-  async getById(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async getById(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const ingredient = await ingredientService.getById(id);
+      const order = await orderIngredientService.getById(id);
       res.status(200).json({
         success: true,
-        data: ingredient,
+        data: order,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -50,14 +50,14 @@ class IngredientController {
     }
   }
 
-  async update(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const data: Partial<IngredientInput> = req.body;
-      const ingredient = await ingredientService.update(id, data);
+      const data = req.body;
+      const order = await orderIngredientService.update(id, data);
       res.status(200).json({
         success: true,
-        data: ingredient,
+        data: order,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -67,10 +67,10 @@ class IngredientController {
     }
   }
 
-  async delete(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async delete(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await ingredientService.delete(id);
+      const result = await orderIngredientService.delete(id);
       res.status(200).json({
         success: true,
         data: result,
@@ -84,4 +84,4 @@ class IngredientController {
   }
 }
 
-export default new IngredientController();
+export default new OrderIngredientController();

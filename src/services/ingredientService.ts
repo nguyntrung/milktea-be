@@ -2,28 +2,32 @@ import ingredientModel, { IngredientInput } from '../models/ingredientModel';
 import { BadRequestError } from '../utils/errors';
 
 class IngredientService {
+  // Tạo mới nguyên liệu
   async create(data: IngredientInput) {
-    const { ten } = data;
+    const { ten, maNhaCungCap } = data;
 
-    // Check if ingredient exists
+    // Kiểm tra xem nguyên liệu đã tồn tại chưa
     const existingIngredient = await ingredientModel.findOne({ ten });
     if (existingIngredient) {
       throw new BadRequestError('Nguyên liệu đã tồn tại');
     }
 
-    // Create ingredient
+    // Tạo nguyên liệu mới
     const ingredient = await ingredientModel.create({
       ...data,
+      maNhaCungCap: Array.isArray(maNhaCungCap) ? maNhaCungCap : [maNhaCungCap], // Đảm bảo maNhaCungCap là mảng
       ngayCapNhat: new Date(),
     });
 
     return ingredient;
   }
 
+  // Lấy tất cả nguyên liệu
   async getAll() {
     return await ingredientModel.find().sort({ ngayTao: -1 });
   }
 
+  // Lấy nguyên liệu theo ID
   async getById(id: string) {
     const ingredient = await ingredientModel.findById(id);
     if (!ingredient) {
@@ -32,12 +36,14 @@ class IngredientService {
     return ingredient;
   }
 
+  // Cập nhật nguyên liệu theo ID
   async update(id: string, data: Partial<IngredientInput>) {
     const ingredient = await ingredientModel.findById(id);
     if (!ingredient) {
       throw new BadRequestError('Nguyên liệu không tồn tại');
     }
 
+    // Cập nhật nguyên liệu
     const updatedIngredient = await ingredientModel.findByIdAndUpdate(
       id,
       { ...data, ngayCapNhat: new Date() },
@@ -46,6 +52,7 @@ class IngredientService {
     return updatedIngredient;
   }
 
+  // Xóa nguyên liệu theo ID
   async delete(id: string) {
     const ingredient = await ingredientModel.findById(id);
     if (!ingredient) {

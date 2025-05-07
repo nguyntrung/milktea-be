@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { DonViTinh } from '../types/common';
 
 export interface IProduct extends Document {
   _id: string;
@@ -12,7 +13,7 @@ export interface IProduct extends Document {
     thanhPhan: {
       maNguyenLieu: string;
       soLuong: number;
-      donViTinh: 'KG' | 'GRAM' | 'LITER' | 'ML' | 'CAI';
+      donViTinh: DonViTinh;
     }[];
   }[];
   hinhAnh?: string[];
