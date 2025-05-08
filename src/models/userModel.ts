@@ -1,20 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { GioiTinh, LoaiGiaoDich, VaiTro } from '../types/common';
+import { GioiTinh, VaiTro, LoaiGiaoDich } from '../types/common';
 
 // Define types
 export interface IUser extends Document {
-  _id: string;
-  email: string;
-  matKhau: string;
-  ten: string;
-  soDienThoai?: string;
-  diaChi?: string;
-  vaiTro: 'user' | 'admin';
-  ngayTao: Date;
-  ngayCapNhat: Date;
-}
-
-export interface RegisterInput {
   _id: string;
   email: string;
   matKhau: string;
@@ -26,7 +14,7 @@ export interface RegisterInput {
   lichSuDiem: {
     thoiGian: Date;
     diem: number;
-    noiDUng: string;
+    noiDung: string;
     diemConLai: number;
     loaiGiaoDich: LoaiGiaoDich;
   }[];
@@ -36,6 +24,16 @@ export interface RegisterInput {
   vaiTro: VaiTro;
   ngayTao: Date;
   ngayCapNhat: Date;
+}
+
+export interface RegisterInput {
+  email: string;
+  matKhau: string;
+  ten: string;
+  ngaySinh: Date;
+  gioiTinh: GioiTinh;
+  soDienThoai?: string;
+  vaiTro?: VaiTro;
 }
 
 export interface LoginInput {
@@ -48,14 +46,30 @@ const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
   matKhau: { type: String, required: true },
   ten: { type: String, required: true },
+  ngaySinh: { type: Date, required: true },
+  gioiTinh: { type: String, enum: Object.values(GioiTinh), required: true },
   soDienThoai: { type: String },
+  diemTichLuy: { type: Number, default: 0 },
+  lichSuDiem: [
+    {
+      thoiGian: { type: Date, default: Date.now },
+      diem: { type: Number, required: true },
+      noiDung: { type: String, required: true },
+      diemConLai: { type: Number, required: true },
+      loaiGiaoDich: { type: String, enum: Object.values(LoaiGiaoDich), required: true },
+    },
+  ],
   diaChi: { type: String },
-  vaiTro: { type: String, enum: ['user', 'admin'], default: 'user' },
+  khuyenMaiDaSuDung: [{ type: String, ref: 'KhuyenMai' }],
+  hoatDong: { type: Boolean, default: true },
+  vaiTro: { type: String, enum: Object.values(VaiTro), default: VaiTro.USER },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ vaiTro: 1 });
+userSchema.index({ hoatDong: 1 });
+userSchema.index({ diemTichLuy: 1 });
 
 export default mongoose.model<IUser>('NguoiDung', userSchema);

@@ -4,13 +4,13 @@ import { protect, adminOnly } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Routes with admin-only access for create, update, delete
-router.post('/', protect, adminOnly, toppingController.create);
-router.put('/:id', protect, adminOnly, toppingController.update);
-router.delete('/:id', protect, adminOnly, toppingController.delete);
-
-// Routes accessible to all authenticated users
+// Public routes
 router.get('/', toppingController.getAll);
-router.get('/:id', protect, toppingController.getById);
+router.get('/:id', toppingController.getById);
+
+// Admin-only routes
+router.post('/', toppingController.create);
+router.put('/:id', toppingController.update);
+router.patch('/:id/deactivate', protect, adminOnly, toppingController.deactivate);
 
 export default router;

@@ -19,13 +19,15 @@ export interface SupplierInput {
 
 // Define schema
 const supplierSchema = new Schema<ISupplier>({
-  ten: { type: String, required: true },
+  ten: { type: String, required: true, unique: true },
   diaChi: { type: String, required: true },
   lienHe: { type: String, required: true },
+  hoatDong: { type: Boolean, default: true },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-supplierSchema.index({ ten: 1 });
+supplierSchema.index({ ten: 1 }, { unique: true });
+supplierSchema.index({ hoatDong: 1 });
 
 export default mongoose.model<ISupplier>('NhaCungCap', supplierSchema);

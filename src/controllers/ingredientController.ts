@@ -3,7 +3,7 @@ import ingredientService from '../services/ingredientService';
 import { IngredientInput } from '../models/ingredientModel';
 
 class IngredientController {
-  async create(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async create(req: Request, res: Response) {
     try {
       const data: IngredientInput = req.body;
       const ingredient = await ingredientService.create(data);
@@ -19,7 +19,7 @@ class IngredientController {
     }
   }
 
-  async getAll(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async getAll(req: Request, res: Response) {
     try {
       const ingredients = await ingredientService.getAll();
       res.status(200).json({
@@ -34,7 +34,7 @@ class IngredientController {
     }
   }
 
-  async getById(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async getById(req: Request, res: Response) {
     try {
       const id = req.params.id;
       const ingredient = await ingredientService.getById(id);
@@ -50,7 +50,7 @@ class IngredientController {
     }
   }
 
-  async update(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
       const data: Partial<IngredientInput> = req.body;
@@ -67,13 +67,13 @@ class IngredientController {
     }
   }
 
-  async delete(req: Request, res: Response): Promise<void> { // Chú ý Promise<void>
+  async deactivate(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await ingredientService.delete(id);
+      const result = await ingredientService.deactivate(id);
       res.status(200).json({
-        success: true,
-        data: result,
+        success: false,
+        message: 'Ingredient deactivated successfully',
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({

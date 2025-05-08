@@ -1,27 +1,76 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import categoryModel, { CategoryInput, ICategory } from '../models/categoryModel';
+import { BadRequestError } from '../utils/errors';
 
-// Define types
-export interface ICategory extends Document {
-  _id: string;
-  ten: string;
-  hoatDong: boolean;
-  ngayTao: Date;
-  ngayCapNhat: Date;
+class CategoryService {
+  async create(data: CategoryInput) {
+    const { ten } = data;
+
+    // Check if category exists
+    const existingCategory = await categoryModel.findOne({ ten });
+    if (existingCategory) {
+      throw new BadRequestError('Danh mục đã tồn tại');
+    }
+
+    // Create category
+    const category = await categoryModel.create({
+      ten,
+      hoatDong: true,
+    });
+
+    return category;
+  }
+
+  async getAll() {
+    return await categoryModel
+      .find({ hoatDong: true })
+      .sort({ ngayTao: -1 });
+  }
+
+  async getById(id: string) {
+    const category = await categoryModel.findOne({ _id: id, hoatDong: true });
+    if (!category) {
+      throw new BadRequestError('Danh mục không tồn tại hoặc đã bị vô hiệu hóa');
+    }
+    return category;
+  }
+
+  async update(id: string, data: Partial<CategoryInput>) {
+    const category = await categoryModel.findOne({ _id: id, hoatDong: true });
+    if (!category) {
+      throw new BadRequestError('Danh mục không tồn tại hoặc đã bị vô hiệu hóa');
+    }
+
+    // Check if new ten is unique
+    if (data.ten && data.ten !== category.ten) {
+      const existingCategory = await categoryModel.findOne({ ten: data.ten });
+      if (existingCategory) {
+        throw new BadRequestError('Tên danh mục đã tồn tại');
+      }
+    }
+
+    const updatedCategory = await categoryModel.findByIdAndUpdate(
+      id,
+      { ...data, ngayCapNhat: new Date() },
+      { new: true }
+    );
+
+    return updatedCategory;
+  }
+
+  async deactivate(id: string) {
+    const category = await categoryModel.findOne({ _id: id, hoatDong: true });
+    if (!category) {
+      throw new BadRequestError('Danh mục không tồn tại hoặc đã bị vô hiệu hóa');
+    }
+
+    const deactivatedCategory = await categoryModel.findByIdAndUpdate(
+      id,
+      { hoatDong: false, ngayCapNhat: new Date() },
+      { new: true }
+    );
+
+    return { message: 'Vô hiệu hóa danh mục thành công', category: deactivatedCategory };
+  }
 }
 
-export interface CategoryInput {
-  ten: string;
-}
-
-// Define schema
-const categorySchema = new Schema<ICategory>({
-  ten: { type: String, required: true, unique: true },
-  hoatDong: { type: Boolean, default: true },
-  ngayTao: { type: Date, default: Date.now },
-  ngayCapNhat: { type: Date, default: Date.now },
-});
-
-categorySchema.index({ ten: 1 }, { unique: true });
-categorySchema.index({ hoatDong: 1 });
-
-export default mongoose.model<ICategory>('DanhMuc', categorySchema);
+export default new CategoryService();
