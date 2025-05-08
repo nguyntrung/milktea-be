@@ -1,14 +1,17 @@
 import { Request, Response } from 'express';
 import orderService from '../services/orderService';
-import { IOrder, OrderInput } from '../models/orderModel';
+import { IOrder } from '../models/orderModel';
 import { BadRequestError } from '../utils/errors';
-import { TrangThaiDonHang } from '../types/common';
+
+export interface AuthRequest extends Request {
+  user: { vaiTro: string };  // Tạo một kiểu riêng cho req.user
+}
 
 class OrderController {
   // Tạo đơn hàng mới
   async create(req: Request, res: Response) {
     try {
-      const data: OrderInput = req.body;
+      const data: IOrder = req.body;
       const order = await orderService.create(data);
       res.status(201).json({
         success: true,
@@ -59,17 +62,8 @@ class OrderController {
   async updateStatus(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const { trangThaiDonHang } = req.body;
-
-      if (!TrangThaiDonHang) {
-        throw new BadRequestError('Trạng thái đơn hàng không hợp lệ');
-      }
-
-      const updatedOrder = await orderService.updateStatus(
-        id,
-        trangThaiDonHang as TrangThaiDonHang
-      );
-
+      const statusUpdate: Partial<IOrder['trangThai']> = req.body;
+      const updatedOrder = await orderService.updateStatus(id, statusUpdate);
       res.status(200).json({
         success: true,
         data: updatedOrder,
@@ -82,10 +76,11 @@ class OrderController {
     }
   }
 
-  async deactivate(req: Request, res: Response) {
+  // Xóa đơn hàng
+  async delete(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await orderService.deactivate(id);
+      const result = await orderService.delete(id);
       res.status(200).json({
         success: true,
         data: result,
@@ -96,7 +91,7 @@ class OrderController {
         message: error.message,
       });
     }
-  }  
+  }
 }
 
 export default new OrderController();
