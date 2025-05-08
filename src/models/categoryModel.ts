@@ -16,10 +16,12 @@ export interface CategoryInput {
 // Define schema
 const categorySchema = new Schema<ICategory>({
   ten: { type: String, required: true, unique: true },
+  hoatDong: { type: Boolean, default: true },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
 categorySchema.index({ ten: 1 }, { unique: true });
+categorySchema.index({ hoatDong: 1 });
 
 export default mongoose.model<ICategory>('DanhMuc', categorySchema);

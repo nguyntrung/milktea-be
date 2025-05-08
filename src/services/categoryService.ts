@@ -1,4 +1,4 @@
-import categoryModel, { CategoryInput } from '../models/categoryModel';
+import categoryModel, { CategoryInput, ICategory } from '../models/categoryModel';
 import { BadRequestError } from '../utils/errors';
 
 class CategoryService {
@@ -14,31 +14,33 @@ class CategoryService {
     // Create category
     const category = await categoryModel.create({
       ten,
-      ngayCapNhat: new Date(),
+      hoatDong: true,
     });
 
     return category;
   }
 
   async getAll() {
-    return await categoryModel.find().sort({ ngayTao: -1 });
+    return await categoryModel
+      .find({ hoatDong: true })
+      .sort({ ngayTao: -1 });
   }
 
   async getById(id: string) {
-    const category = await categoryModel.findById(id);
+    const category = await categoryModel.findOne({ _id: id, hoatDong: true });
     if (!category) {
-      throw new BadRequestError('Danh mục không tồn tại');
+      throw new BadRequestError('Danh mục không tồn tại hoặc đã bị vô hiệu hóa');
     }
     return category;
   }
 
   async update(id: string, data: Partial<CategoryInput>) {
-    const category = await categoryModel.findById(id);
+    const category = await categoryModel.findOne({ _id: id, hoatDong: true });
     if (!category) {
-      throw new BadRequestError('Danh mục không tồn tại');
+      throw new BadRequestError('Danh mục không tồn tại hoặc đã bị vô hiệu hóa');
     }
 
-    // Check if new name is unique
+    // Check if new ten is unique
     if (data.ten && data.ten !== category.ten) {
       const existingCategory = await categoryModel.findOne({ ten: data.ten });
       if (existingCategory) {
@@ -51,17 +53,23 @@ class CategoryService {
       { ...data, ngayCapNhat: new Date() },
       { new: true }
     );
+
     return updatedCategory;
   }
 
-  async delete(id: string) {
-    const category = await categoryModel.findById(id);
+  async deactivate(id: string) {
+    const category = await categoryModel.findOne({ _id: id, hoatDong: true });
     if (!category) {
-      throw new BadRequestError('Danh mục không tồn tại');
+      throw new BadRequestError('Danh mục không tồn tại hoặc đã bị vô hiệu hóa');
     }
 
-    await categoryModel.findByIdAndDelete(id);
-    return { message: 'Xóa danh mục thành công' };
+    const deactivatedCategory = await categoryModel.findByIdAndUpdate(
+      id,
+      { hoatDong: false, ngayCapNhat: new Date() },
+      { new: true }
+    );
+
+    return { message: 'Vô hiệu hóa danh mục thành công', category: deactivatedCategory };
   }
 }
 
