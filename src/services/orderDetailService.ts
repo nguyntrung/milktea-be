@@ -40,11 +40,11 @@ class OrderDetailService {
     });
 
     await orderDetail.save();
-    // 👉 Tính lại tổng tiền đơn hàng
+    //Tính lại tổng tiền đơn hàng
     const allDetails = await orderDetailModel.find({ maHoaDon });
     const tongTienHang = allDetails.reduce((sum, d) => sum + d.thanhTien, 0);
 
-    // 👉 Cập nhật tổng tiền vào đơn hàng
+    //Cập nhật tổng tiền vào đơn hàng
     await orderModel.findByIdAndUpdate(maHoaDon, {
       $set: {
         tongTienHang,
