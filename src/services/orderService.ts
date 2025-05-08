@@ -1,41 +1,64 @@
-import orderModel, { IOrder, OrderInput } from '../models/orderModel';
-import orderDetailModel from '../models/orderDetailModel';
+import orderModel, { IOrder } from '../models/orderModel';
+import productModel from '../models/productModel';
+import toppingModel from '../models/toppingModel';
+//import discountModel from '../models/discountModel'; // Giả sử bạn có model khuyến mãi
 import { BadRequestError } from '../utils/errors';
-import { TrangThaiDonHang } from '../types/common';
 
 class OrderService {
-  // Tạo đơn hàng mới
-  async create(data: OrderInput) {
-    const {
-      maKhachHang,
-      maNhanVien,
-      nguoiGiao,
-      thongTinNguoiNhan,
-      khuyenMai = [],
-      thanhToan,
-      ghiChu = ''
-    } = data;
-  
-    // Khởi tạo đơn hàng mới với tổng tiền = 0 (sẽ cập nhật sau khi thêm chi tiết)
-    const order: IOrder = await orderModel.create({
-      maKhachHang,
-      maNhanVien,
-      ngayLap: new Date(),
-      tongTienHang: 0,
-      khuyenMai,
-      tongTien: 0,
-      nguoiGiao,
-      thongTinNguoiNhan,
-      thanhToan,
-      lichSuTrangThai: [{
-        thoiGian: new Date(),
-        trangThaiDonHang: TrangThaiDonHang.CHO_XU_LY,
-      }],
-      ghiChu,
+   // Tạo đơn hàng mới
+  async create(data: IOrder) {
+    const { maNguoiDung, sanPham } = data;
+
+    // Tính tổng giá trị của đơn hàng
+    let tongGia = 0;
+
+    // Duyệt qua từng sản phẩm trong đơn hàng
+    for (const item of sanPham) {
+      // Lấy sản phẩm từ database
+      const product = await productModel.findById(item.maSanPham);
+      if (!product) {
+        throw new BadRequestError(`Sản phẩm với ID ${item.maSanPham} không tồn tại.`);
+      }
+      
+      // Xác định giá của sản phẩm dựa trên kích thước
+      let productPrice: number;
+      if (item.kichCo.nho == 1) {
+        productPrice = product.gia.nho;
+      } else if (item.kichCo.vua == 1) {
+        productPrice = product.gia.vua;
+      } else if (item.kichCo.lon == 1) {
+        productPrice = product.gia.lon;
+      } else {
+        throw new BadRequestError(`Kích thước sản phẩm không hợp lệ: ${item.kichCo}`);
+      }
+
+      // Tính giá của sản phẩm dựa trên số lượng
+      item.gia = productPrice * item.soLuong;
+
+      // Cộng dồn vào tổng giá của đơn hàng
+      tongGia += item.gia;
+
+      // Kiểm tra topping (nếu có)
+      if (item.topping && item.topping.length > 0) {
+        for (const toppingId of item.topping) {
+          const topping = await toppingModel.findById(toppingId);
+          if (!topping) {
+            throw new BadRequestError(`Topping ${toppingId} không tồn tại`);
+          }
+          // Có thể tính thêm chi phí cho topping ở đây nếu cần
+          tongGia += topping.gia;
+        }
+      }
+    }
+    // Tạo đơn hàng
+    const order = new orderModel({
+      ...data,
+      tongGia,
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });
-  
+
+    await order.save();
     return order;
   }
 
@@ -43,9 +66,10 @@ class OrderService {
   async getAll() {
     return await orderModel
       .find()
-      .populate('maKhachHang', 'ten')
-      .populate('maNhanVien', 'ten')
-      .populate('khuyenMai.maKhuyenMai', 'ten')
+      .populate('maNguoiDung', 'ten')
+      .populate('sanPham.maSanPham', 'ten gia')
+      .populate('sanPham.topping', 'ten')
+      .populate('giamGia.maKhuyenMai', 'ten soTien')
       .sort({ ngayTao: -1 });
   }
 
@@ -53,54 +77,42 @@ class OrderService {
   async getById(id: string) {
     const order = await orderModel
       .findById(id)
-      .populate('maKhachHang', 'ten')
-      .populate('maNhanVien', 'ten')
-      .populate('khuyenMai.maKhuyenMai', 'ten');
-    if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
+      .populate('maNguoiDung', 'ten')
+      .populate('sanPham.maSanPham', 'ten gia')
+      .populate('sanPham.topping', 'ten')
+      .populate('giamGia.maKhuyenMai', 'ten soTien');
+    if (!order) {
+      throw new BadRequestError('Đơn hàng không tồn tại');
+    }
     return order;
   }
 
   // Cập nhật trạng thái đơn hàng
-  async updateStatus(id: string, trangThaiDonHang: TrangThaiDonHang) {
-    const order = await orderModel.findById(id);
-    if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
-
-    order.lichSuTrangThai.push({
-      thoiGian: new Date(),
-      trangThaiDonHang,
-    });
-    order.ngayCapNhat = new Date();
-    await order.save();
-
-    return order;
-  }
-
-  // Hủy đơn hàng
-  async deactivate(id: string) {
+  async updateStatus(id: string, statusUpdate: Partial<IOrder['trangThai']>) {
     const order = await orderModel.findById(id);
     if (!order) {
       throw new BadRequestError('Đơn hàng không tồn tại');
     }
 
-    // Nếu đã bị hủy trước đó thì không làm lại
-    const daHuy = order.lichSuTrangThai.some(
-      trangThai => trangThai.trangThaiDonHang === TrangThaiDonHang.DA_HUY
-    );
-    if (daHuy) {
-      throw new BadRequestError('Đơn hàng đã bị hủy trước đó');
+    const updatedOrder = await orderModel
+      .findByIdAndUpdate(id, { $set: { trangThai: statusUpdate, ngayCapNhat: new Date() } }, { new: true })
+      .populate('maNguoiDung', 'ten')
+      .populate('sanPham.maSanPham', 'ten gia')
+      .populate('sanPham.topping', 'ten')
+      .populate('giamGia.maKhuyenMai', 'ten soTien');
+
+    return updatedOrder;
+  }
+
+  // Xóa đơn hàng
+  async delete(id: string) {
+    const order = await orderModel.findById(id);
+    if (!order) {
+      throw new BadRequestError('Đơn hàng không tồn tại');
     }
 
-    order.lichSuTrangThai.push({
-      thoiGian: new Date(),
-      trangThaiDonHang: TrangThaiDonHang.DA_HUY,
-    });
-    order.ngayCapNhat = new Date();
-    await order.save();
-
-    return {
-      message: 'Hủy đơn hàng thành công',
-      order,
-    };
+    await orderModel.findByIdAndDelete(id);
+    return { message: 'Xóa đơn hàng thành công' };
   }
 }
 
