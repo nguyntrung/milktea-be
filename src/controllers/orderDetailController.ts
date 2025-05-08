@@ -1,18 +1,16 @@
 import { Request, Response } from 'express';
-import orderService from '../services/orderService';
-import { IOrder, OrderInput } from '../models/orderModel';
-import { BadRequestError } from '../utils/errors';
-import { TrangThaiDonHang } from '../types/common';
+import orderDetailService from '../services/orderDetailService';
+import { IOrderDetail, OrderDetailInput } from '../models/orderDetailModel';
 
-class OrderController {
-  // Tạo đơn hàng mới
+class OrderDetailController {
+  // Tạo chi tiết đơn hàng
   async create(req: Request, res: Response) {
     try {
-      const data: OrderInput = req.body;
-      const order = await orderService.create(data);
+      const data: OrderDetailInput = req.body;
+      const detail = await orderDetailService.create(data);
       res.status(201).json({
         success: true,
-        data: order,
+        data: detail,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -22,70 +20,10 @@ class OrderController {
     }
   }
 
-  // Lấy tất cả đơn hàng
+  // Lấy tất cả chi tiết đơn hàng
   async getAll(req: Request, res: Response) {
     try {
-      const orders = await orderService.getAll();
-      res.status(200).json({
-        success: true,
-        data: orders,
-      });
-    } catch (error: any) {
-      res.status(error.statusCode || 500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Lấy đơn hàng theo ID
-  async getById(req: Request, res: Response) {
-    try {
-      const id = req.params.id;
-      const order = await orderService.getById(id);
-      res.status(200).json({
-        success: true,
-        data: order,
-      });
-    } catch (error: any) {
-      res.status(error.statusCode || 500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  // Cập nhật trạng thái đơn hàng
-  async updateStatus(req: Request, res: Response) {
-    try {
-      const id = req.params.id;
-      const { trangThaiDonHang } = req.body;
-
-      if (!TrangThaiDonHang) {
-        throw new BadRequestError('Trạng thái đơn hàng không hợp lệ');
-      }
-
-      const updatedOrder = await orderService.updateStatus(
-        id,
-        trangThaiDonHang as TrangThaiDonHang
-      );
-
-      res.status(200).json({
-        success: true,
-        data: updatedOrder,
-      });
-    } catch (error: any) {
-      res.status(error.statusCode || 500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
-
-  async deactivate(req: Request, res: Response) {
-    try {
-      const id = req.params.id;
-      const result = await orderService.deactivate(id);
+      const result = await orderDetailService.getAll();
       res.status(200).json({
         success: true,
         data: result,
@@ -96,7 +34,59 @@ class OrderController {
         message: error.message,
       });
     }
-  }  
+  }
+
+  // Lấy chi tiết theo mã hóa đơn
+  async getByOrderId(req: Request, res: Response) {
+    try {
+      const maHoaDon = req.params.maHoaDon;
+      const details = await orderDetailService.getByOrderId(maHoaDon);
+      res.status(200).json({
+        success: true,
+        data: details,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Cập nhật chi tiết đơn hàng
+  async update(req: Request, res: Response) {
+    try {
+      const id = req.params.id;
+      const updateData: Partial<IOrderDetail> = req.body;
+      const updated = await orderDetailService.update(id, updateData);
+      res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Xóa chi tiết đơn hàng
+  async delete(req: Request, res: Response) {
+    try {
+      const id = req.params.id;
+      const result = await orderDetailService.delete(id);
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
 }
 
-export default new OrderController();
+export default new OrderDetailController();
