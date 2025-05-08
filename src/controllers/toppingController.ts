@@ -67,10 +67,10 @@ class ToppingController {
     }
   }
 
-  async delete(req: Request, res: Response) {
+  async deactivate(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await toppingService.delete(id);
+      const result = await toppingService.deactivate(id);
       res.status(200).json({
         success: true,
         data: result,

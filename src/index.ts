@@ -8,7 +8,7 @@ import ingredientRoutes from './routes/ingredientRoutes';
 import categoryRoutes from './routes/categoryRoutes';
 import toppingRoutes from './routes/toppingRoutes';
 import productRoutes from './routes/productRoutes';
-import orderRoutes from './routes/orderRoutes';
+// import orderRoutes from './routes/orderRoutes';
 import supplierRoutes from './routes/supplierRoutes';
 
 dotenv.config();
@@ -28,7 +28,7 @@ app.use('/api/ingredients', ingredientRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/toppings', toppingRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/order', orderRoutes);
+// app.use('/api/order', orderRoutes);
 app.use('/api/suppliers', supplierRoutes);
 
 // Sample route

@@ -14,28 +14,22 @@ export interface IIngredient extends Document {
 
 export interface IngredientInput {
   ten: string;
-  donVi: string;
-  nguongCanhBao: number;
+  donViTinh: DonViTinh;
   maNhaCungCap: string | string[];
 }
 
 // Define schema
 const ingredientSchema = new Schema<IIngredient>({
-  ten: { type: String, required: true },
-  soLuong: [
-    {
-      thoiGian: { type: Date, required: true },
-      soLuongTon: { type: Number, required: true }
-    }
-  ],
-  donVi: { type: String, required: true },
-  nguongCanhBao: { type: Number, required: true },
-  maNhaCungCap: { type: [String], ref: 'NhaCungCap', required: true },  // Cập nhật để nhận mảng String
+  ten: { type: String, required: true, unique: true },
+  donViTinh: { type: String, enum: Object.values(DonViTinh), required: true },
+  maNhaCungCap: { type: [String], ref: 'NhaCungCap', required: true },
+  hoatDong: { type: Boolean, default: true },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-ingredientSchema.index({ ten: 1 });
-ingredientSchema.index({ 'soLuong.soLuongTon': 1 }); // Nếu cần tìm kiếm theo số lượng tồn
+ingredientSchema.index({ ten: 1 }, { unique: true });
+ingredientSchema.index({ hoatDong: 1 });
+ingredientSchema.index({ maNhaCungCap: 1 });
 
 export default mongoose.model<IIngredient>('NguyenLieu', ingredientSchema);

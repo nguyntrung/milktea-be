@@ -1,10 +1,9 @@
-import ingredientModel from '../models/ingredientModel';
-import supplierModel, { SupplierInput } from '../models/supplierModel';
+import supplierModel, { SupplierInput, ISupplier } from '../models/supplierModel';
 import { BadRequestError } from '../utils/errors';
 
 class SupplierService {
   async create(data: SupplierInput) {
-    const { ten } = data;
+    const { ten, diaChi, lienHe } = data;
 
     // Check if supplier exists
     const existingSupplier = await supplierModel.findOne({ ten });
@@ -14,32 +13,36 @@ class SupplierService {
 
     // Create supplier
     const supplier = await supplierModel.create({
-      ...data,
-      ngayCapNhat: new Date(),
+      ten,
+      diaChi,
+      lienHe,
+      hoatDong: true,
     });
 
     return supplier;
   }
 
   async getAll() {
-    return await supplierModel.find().sort({ ngayTao: -1 });
+    return await supplierModel
+      .find({ hoatDong: true })
+      .sort({ ngayTao: -1 });
   }
 
   async getById(id: string) {
-    const supplier = await supplierModel.findById(id);
+    const supplier = await supplierModel.findOne({ _id: id, hoatDong: true });
     if (!supplier) {
-      throw new BadRequestError('Nhà cung cấp không tồn tại');
+      throw new BadRequestError('Nhà cung cấp không tồn tại hoặc đã bị vô hiệu hóa');
     }
     return supplier;
   }
 
   async update(id: string, data: Partial<SupplierInput>) {
-    const supplier = await supplierModel.findById(id);
+    const supplier = await supplierModel.findOne({ _id: id, hoatDong: true });
     if (!supplier) {
-      throw new BadRequestError('Nhà cung cấp không tồn tại');
+      throw new BadRequestError('Nhà cung cấp không tồn tại hoặc đã bị vô hiệu hóa');
     }
 
-    // Check if new name is unique
+    // Check if new ten is unique
     if (data.ten && data.ten !== supplier.ten) {
       const existingSupplier = await supplierModel.findOne({ ten: data.ten });
       if (existingSupplier) {
@@ -52,23 +55,23 @@ class SupplierService {
       { ...data, ngayCapNhat: new Date() },
       { new: true }
     );
+
     return updatedSupplier;
   }
 
-  async delete(id: string) {
-    const supplier = await supplierModel.findById(id);
+  async deactivate(id: string) {
+    const supplier = await supplierModel.findOne({ _id: id, hoatDong: true });
     if (!supplier) {
-      throw new BadRequestError('Nhà cung cấp không tồn tại');
+      throw new BadRequestError('Nhà cung cấp không tồn tại hoặc đã bị vô hiệu hóa');
     }
 
-    // Check if supplier is referenced by NguyenLieu
-    const ingredient = await ingredientModel.findOne({ maNhaCungCap: id });
-    if (ingredient) {
-      throw new BadRequestError('Không thể xóa nhà cung cấp vì đang được sử dụng trong nguyên liệu');
-    }
+    const deactivatedSupplier = await supplierModel.findByIdAndUpdate(
+      id,
+      { hoatDong: false, ngayCapNhat: new Date() },
+      { new: true }
+    );
 
-    await supplierModel.findByIdAndDelete(id);
-    return { message: 'Xóa nhà cung cấp thành công' };
+    return { message: 'Vô hiệu hóa nhà cung cấp thành công', supplier: deactivatedSupplier };
   }
 }
 
