@@ -27,7 +27,6 @@ const supplierSchema = new Schema<ISupplier>({
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-supplierSchema.index({ ten: 1 }, { unique: true });
 supplierSchema.index({ hoatDong: 1 });
 
 export default mongoose.model<ISupplier>('NhaCungCap', supplierSchema);

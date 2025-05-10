@@ -67,7 +67,6 @@ const userSchema = new Schema<IUser>({
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ vaiTro: 1 });
 userSchema.index({ hoatDong: 1 });
 userSchema.index({ diemTichLuy: 1 });

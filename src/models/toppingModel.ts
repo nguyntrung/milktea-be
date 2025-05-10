@@ -31,7 +31,6 @@ const toppingSchema = new Schema<ITopping>({
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-toppingSchema.index({ ten: 1 }, { unique: true });
 toppingSchema.index({ hoatDong: 1 });
 toppingSchema.index({ gia: 1 });
 

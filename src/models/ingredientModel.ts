@@ -28,7 +28,6 @@ const ingredientSchema = new Schema<IIngredient>({
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-ingredientSchema.index({ ten: 1 }, { unique: true });
 ingredientSchema.index({ hoatDong: 1 });
 ingredientSchema.index({ maNhaCungCap: 1 });
 
