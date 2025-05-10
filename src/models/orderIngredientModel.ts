@@ -34,14 +34,14 @@ const orderIngredientSchema = new Schema<IOrderIngredient>({
   maNhaCungCap: { type: String, required: true },
   ngayDat: { type: Date, default: Date.now },
   thoiGianCanGiao: { type: Date, default: Date.now },
-  nguyenLieu: [
-    {
-      maNguyenLieu: { type: String, required: true },
-      soLuong: { type: Number, required: true },
-      donGia: { type: Number, required: false },
-      thanhTien: { type: Number, required: false },
-    },
-  ],
+  // nguyenLieu: [
+  //   {
+  //     maNguyenLieu: { type: String, required: true },
+  //     soLuong: { type: Number, required: true },
+  //     donGia: { type: Number, required: false },
+  //     thanhTien: { type: Number, required: false },
+  //   },
+  // ],
   tongTien: { type: Number, required: false },
   ngayNhap: { type: Date },
   trangThai: {

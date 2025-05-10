@@ -50,22 +50,22 @@ class OrderIngredientController {
     }
   }
 
-  async update(req: Request, res: Response) {
-    try {
-      const id = req.params.id;
-      const data = req.body;
-      const order = await orderIngredientService.update(id, data);
-      res.status(200).json({
-        success: true,
-        data: order,
-      });
-    } catch (error: any) {
-      res.status(error.statusCode || 500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  }
+  // async update(req: Request, res: Response) {
+  //   try {
+  //     const id = req.params.id;
+  //     const data = req.body;
+  //     const order = await orderIngredientService.update(id, data);
+  //     res.status(200).json({
+  //       success: true,
+  //       data: order,
+  //     });
+  //   } catch (error: any) {
+  //     res.status(error.statusCode || 500).json({
+  //       success: false,
+  //       message: error.message,
+  //     });
+  //   }
+  // }
 
   async delete(req: Request, res: Response) {
     try {
