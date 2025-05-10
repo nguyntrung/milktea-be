@@ -21,7 +21,6 @@ const categorySchema = new Schema<ICategory>({
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-categorySchema.index({ ten: 1 }, { unique: true });
 categorySchema.index({ hoatDong: 1 });
 
 export default mongoose.model<ICategory>('DanhMuc', categorySchema);
