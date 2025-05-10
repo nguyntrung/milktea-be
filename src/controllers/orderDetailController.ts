@@ -1,15 +1,16 @@
 import { Request, Response } from 'express';
-import toppingService from '../services/toppingService';
-import { ToppingInput } from '../models/toppingModel';
+import orderDetailService from '../services/orderDetailService';
+import { IOrderDetail, OrderDetailInput } from '../models/orderDetailModel';
 
-class ToppingController {
+class OrderDetailController {
+  // Tạo chi tiết đơn hàng
   async create(req: Request, res: Response) {
     try {
-      const data: ToppingInput = req.body;
-      const topping = await toppingService.create(data);
+      const data: OrderDetailInput = req.body;
+      const detail = await orderDetailService.create(data);
       res.status(201).json({
         success: true,
-        data: topping,
+        data: detail,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -19,12 +20,13 @@ class ToppingController {
     }
   }
 
+  // Lấy tất cả chi tiết đơn hàng
   async getAll(req: Request, res: Response) {
     try {
-      const toppings = await toppingService.getAll();
+      const result = await orderDetailService.getAll();
       res.status(200).json({
         success: true,
-        data: toppings,
+        data: result,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -34,13 +36,14 @@ class ToppingController {
     }
   }
 
-  async getById(req: Request, res: Response) {
+  // Lấy chi tiết theo mã hóa đơn
+  async getByOrderId(req: Request, res: Response) {
     try {
-      const id = req.params.id;
-      const topping = await toppingService.getById(id);
+      const maHoaDon = req.params.maHoaDon;
+      const details = await orderDetailService.getByOrderId(maHoaDon);
       res.status(200).json({
         success: true,
-        data: topping,
+        data: details,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -50,14 +53,15 @@ class ToppingController {
     }
   }
 
+  // Cập nhật chi tiết đơn hàng
   async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const data: Partial<ToppingInput> = req.body;
-      const topping = await toppingService.update(id, data);
+      const updateData: Partial<IOrderDetail> = req.body;
+      const updated = await orderDetailService.update(id, updateData);
       res.status(200).json({
         success: true,
-        data: topping,
+        data: updated,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -67,10 +71,11 @@ class ToppingController {
     }
   }
 
-  async deactivate(req: Request, res: Response) {
+  // Xóa chi tiết đơn hàng
+  async delete(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await toppingService.deactivate(id);
+      const result = await orderDetailService.delete(id);
       res.status(200).json({
         success: true,
         data: result,
@@ -84,4 +89,4 @@ class ToppingController {
   }
 }
 
-export default new ToppingController();
+export default new OrderDetailController();
