@@ -41,46 +41,46 @@ class orderIngredientService {
     return order;
   }
 
-  async update(id: string, data: any) {
-    const order = await orderIngredientModel.findById(id);
-    if (!order) {
-      throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
-    }
+  // async update(id: string, data: any) {
+  //   const order = await orderIngredientModel.findById(id);
+  //   if (!order) {
+  //     throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
+  //   }
 
-    // Nếu có cập nhật đơn giá và số lượng, thì tính thành tiền cho từng nguyên liệu
-    let nguyenLieu = order.nguyenLieu;
+  //   // Nếu có cập nhật đơn giá và số lượng, thì tính thành tiền cho từng nguyên liệu
+  //   let nguyenLieu = order.nguyenLieu;
 
-    if (data.nguyenLieu && Array.isArray(data.nguyenLieu)) {
-      nguyenLieu = data.nguyenLieu.map((item: any) => {
-        const donGia = item.donGia ?? 0;
-        const soLuong = item.soLuong ?? 0;
-        const thanhTien = donGia * soLuong;
-        return {
-          ...item,
-          donGia,
-          thanhTien
-        };
-      });
-    }
+  //   if (data.nguyenLieu && Array.isArray(data.nguyenLieu)) {
+  //     nguyenLieu = data.nguyenLieu.map((item: any) => {
+  //       const donGia = item.donGia ?? 0;
+  //       const soLuong = item.soLuong ?? 0;
+  //       const thanhTien = donGia * soLuong;
+  //       return {
+  //         ...item,
+  //         donGia,
+  //         thanhTien
+  //       };
+  //     });
+  //   }
 
-    // Tính tổng tiền mới
-    const tongTien = nguyenLieu.reduce((sum, item) => sum + (item.thanhTien || 0), 0);
+  //   // Tính tổng tiền mới
+  //   const tongTien = nguyenLieu.reduce((sum, item) => sum + (item.thanhTien || 0), 0);
 
-    const updatedOrder = await orderIngredientModel.findByIdAndUpdate(
-      id,
-      {
-        ...data,
-        nguyenLieu,
-        tongTien,
-        ngayNhap: data.ngayNhap || new Date(),
-        nguoiNhap: data.nguoiNhap || order.nguoiNhap,
-        ngayCapNhat: new Date()
-      },
-      { new: true }
-    );
+  //   const updatedOrder = await orderIngredientModel.findByIdAndUpdate(
+  //     id,
+  //     {
+  //       ...data,
+  //       nguyenLieu,
+  //       tongTien,
+  //       ngayNhap: data.ngayNhap || new Date(),
+  //       nguoiNhap: data.nguoiNhap || order.nguoiNhap,
+  //       ngayCapNhat: new Date()
+  //     },
+  //     { new: true }
+  //   );
 
-    return updatedOrder;
-  }
+  //   return updatedOrder;
+  // }
 
   async delete(id: string) {
     const order = await orderIngredientModel.findById(id);
