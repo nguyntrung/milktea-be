@@ -1,7 +1,7 @@
 {
   "name": "milktea-be",
   "version": "1.0.0",
-  "description": "",
+  "description": "A boilerplate Node.js project using **Express.js**, **TypeScript**, **Mongoose (MongoDB)**, **ESLint**, **Prettier**, and **pnpm**. It provides a clean and scalable project structure with folders for configuration, controllers, models, routes, middlewares, utilities, and documentation.",
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
@@ -15,6 +15,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.6.5",
   "dependencies": {
+    "@types/mongoose": "^5.11.96",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
@@ -22,7 +23,9 @@
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.13.2"
+    "mongoose": "^8.14.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -32,11 +35,22 @@
     "@types/helmet": "^4.0.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.14.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
     "prettier": "^3.5.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nguyntrung/milktea-be.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nguyntrung/milktea-be/issues"
+  },
+  "homepage": "https://github.com/nguyntrung/milktea-be#readme",
+  "type": "commonjs"
 }
