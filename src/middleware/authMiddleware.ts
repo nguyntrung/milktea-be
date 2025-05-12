@@ -3,7 +3,7 @@ import { verifyToken } from '../utils/jwt';
 import userModel from '../models/userModel';
 import { UnauthorizedError, ForbiddenError } from '../utils/errors';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: any;
 }
 
