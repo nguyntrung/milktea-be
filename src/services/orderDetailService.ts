@@ -1,5 +1,6 @@
 import orderDetailModel, { IOrderDetail, OrderDetailInput } from '../models/orderDetailModel';
 import orderModel from '../models/orderModel';
+import orderService from './orderService';
 import productModel from '../models/productModel';
 import toppingModel from '../models/toppingModel';
 import { BadRequestError } from '../utils/errors';
@@ -28,11 +29,25 @@ class OrderDetailService {
       tongTopping += giaTopping * (topping.soLuong || 1);
     }
 
+    // Sau khi tính tongTopping
+    const toppingWithGia = await Promise.all(data.topping.map(async (topping) => {
+      const toppingDoc = await toppingModel.findById(topping.maTopping);
+      if (!toppingDoc) {
+        throw new BadRequestError(`Topping với ID ${topping.maTopping} không tồn tại`);
+      }
+      return {
+        ...topping,
+        gia: toppingDoc.gia, // thêm giá
+      };
+    }));
+
+
     // Tính thành tiền
     const thanhTien = (donGia * data.soLuong) + tongTopping;
 
     const orderDetail = new orderDetailModel({
       ...data,
+      topping: toppingWithGia,
       donGia,
       thanhTien,
       ngayTao: new Date(),
@@ -44,14 +59,8 @@ class OrderDetailService {
     const allDetails = await orderDetailModel.find({ maHoaDon });
     const tongTienHang = allDetails.reduce((sum, d) => sum + d.thanhTien, 0);
 
-    //Cập nhật tổng tiền vào đơn hàng
-    await orderModel.findByIdAndUpdate(maHoaDon, {
-      $set: {
-        tongTienHang,
-        tongTien: tongTienHang, // nếu có khuyến mãi thì trừ chỗ này
-        ngayCapNhat: new Date(),
-      },
-    });
+    // Gọi OrderService để tính lại tổng tiền (có khuyến mãi)
+    await orderService.recalculateTotal(data.maHoaDon);
 
     return orderDetail;
   }
@@ -86,6 +95,12 @@ class OrderDetailService {
       { new: true }
     );
 
+    if (!updated) {
+      throw new BadRequestError('Cập nhật chi tiết đơn hàng thất bại');
+    }
+      // Cập nhật lại tổng tiền đơn hàng
+    await orderService.recalculateTotal(updated.maHoaDon);
+    
     return updated;
   }
 
@@ -96,7 +111,13 @@ class OrderDetailService {
       throw new BadRequestError('Chi tiết đơn hàng không tồn tại');
     }
 
+    const maHoaDon = detail.maHoaDon; // Lưu lại mã hóa đơn trước khi xóa
+
     await orderDetailModel.findByIdAndDelete(id);
+
+    // Sau khi xóa thì cập nhật lại tổng tiền đơn hàng
+    await orderService.recalculateTotal(maHoaDon);
+
     return { message: 'Xóa chi tiết đơn hàng thành công' };
   }
 }

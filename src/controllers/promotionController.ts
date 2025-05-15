@@ -1,15 +1,16 @@
 import { Request, Response } from 'express';
-import orderIngredientService from '../services/orderIngredientService';
-import { OrderIngredientInput } from '../models/orderIngredientModel'; 
+import promotionService from '../services/promotionService';
+import { PromotionInput } from '../models/promotionModel';
 
-class OrderIngredientController {
+class PromotionController {
+  // Tạo khuyến mãi
   async create(req: Request, res: Response) {
     try {
-      const data: OrderIngredientInput = req.body;
-      const order = await orderIngredientService.create(data);
+      const data: PromotionInput = req.body;
+      const promotion = await promotionService.create(data);
       res.status(201).json({
         success: true,
-        data: order,
+        data: promotion,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -19,12 +20,13 @@ class OrderIngredientController {
     }
   }
 
+  // Lấy tất cả khuyến mãi
   async getAll(req: Request, res: Response) {
     try {
-      const orders = await orderIngredientService.getAll();
+      const result = await promotionService.getAll();
       res.status(200).json({
         success: true,
-        data: orders,
+        data: result,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -34,13 +36,14 @@ class OrderIngredientController {
     }
   }
 
+  // Lấy khuyến mãi theo ID
   async getById(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const order = await orderIngredientService.getById(id);
+      const promotion = await promotionService.getById(id);
       res.status(200).json({
         success: true,
-        data: order,
+        data: promotion,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -50,14 +53,15 @@ class OrderIngredientController {
     }
   }
 
+  // Cập nhật khuyến mãi
   async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const data = req.body;
-      const order = await orderIngredientService.update(id, data);
+      const updateData: Partial<PromotionInput> = req.body;
+      const updated = await promotionService.update(id, updateData);
       res.status(200).json({
         success: true,
-        data: order,
+        data: updated,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -67,10 +71,11 @@ class OrderIngredientController {
     }
   }
 
+  // Xóa khuyến mãi
   async delete(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await orderIngredientService.delete(id);
+      const result = await promotionService.delete(id);
       res.status(200).json({
         success: true,
         data: result,
@@ -84,4 +89,4 @@ class OrderIngredientController {
   }
 }
 
-export default new OrderIngredientController();
+export default new PromotionController();
