@@ -55,6 +55,29 @@ class OrderController {
     }
   }
 
+    // Lấy danh sách đơn hàng theo mã khách hàng
+  async getByCustomerId(req: Request, res: Response) {
+    try {
+      const userId = req.params.userId;
+
+      if (!userId) {
+        throw new BadRequestError('Thiếu mã khách hàng');
+      }
+
+      const orders = await orderService.getByCustomerId(userId);
+
+      res.status(200).json({
+        success: true,
+        data: orders,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // Cập nhật trạng thái đơn hàng
   async updateStatus(req: Request, res: Response) {
     try {
