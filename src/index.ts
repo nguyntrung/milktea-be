@@ -9,8 +9,11 @@ import categoryRoutes from './routes/categoryRoutes';
 import toppingRoutes from './routes/toppingRoutes';
 import productRoutes from './routes/productRoutes';
 import cartRoutes from './routes/cartRoutes';
-// import orderRoutes from './routes/orderRoutes';
+import orderRoutes from './routes/orderRoutes';
+import orderDetailRoutes from './routes/orderDetailRoutes';
 import supplierRoutes from './routes/supplierRoutes';
+import orderIngredientRoutes from './routes/orderIngredientRoutes';
+import orderIngredientDetailRoutes from './routes/orderIngredientDetailRoutes';
 
 dotenv.config();
 
@@ -30,8 +33,11 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/toppings', toppingRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/carts', cartRoutes);
-// app.use('/api/order', orderRoutes);
+app.use('/api/order', orderRoutes);
+app.use('/api/orderDetail', orderDetailRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/orderIngredient', orderIngredientRoutes);
+app.use('/api/orderIngredientDetail', orderIngredientDetailRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {

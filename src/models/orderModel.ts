@@ -6,10 +6,10 @@ export interface IOrder extends Document {
   maNhanVien: string;
   ngayLap: Date;
   tongTienHang: number;
-  khuyenMai: {
-    maKhuyenMai: string;
-    giaTri: number;
-  }[];
+  // khuyenMai: {
+  //   maKhuyenMai: string;
+  //   giaTri: number;
+  // }[];
   tongTien: number;
   nguoiGiao: string;
   thongTinNguoiNhan: string;
@@ -29,10 +29,10 @@ export interface IOrder extends Document {
 export interface OrderInput {
   maKhachHang: string;
   maNhanVien: string;
-  khuyenMai: {
-    maKhuyenMai: string;
-    giaTri: number;
-  }[];
+  // khuyenMai: {
+  //   maKhuyenMai: string;
+  //   giaTri: number;
+  // }[];
   nguoiGiao: string;
   thongTinNguoiNhan: string;
   thanhToan: {
@@ -47,10 +47,10 @@ const orderSchema = new Schema<IOrder>({
   maNhanVien: { type: String, ref: 'NguoiDung', required: true },
   ngayLap: { type: Date, default: Date.now },
   tongTienHang: { type: Number, required: true },
-  khuyenMai: [{
-    maKhuyenMai: { type: String, ref: 'KhuyenMai' },
-    giaTri: { type: Number },
-  }],
+  // khuyenMai: [{
+  //   maKhuyenMai: { type: String, ref: 'KhuyenMai' },
+  //   giaTri: { type: Number },
+  // }],
   tongTien: { type: Number, required: true },
   nguoiGiao: { type: String, required: true },
   thongTinNguoiNhan: { type: String, required: true },

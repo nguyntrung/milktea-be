@@ -11,7 +11,7 @@ class OrderService {
       maNhanVien,
       nguoiGiao,
       thongTinNguoiNhan,
-      khuyenMai = [],
+      //khuyenMai = [],
       thanhToan,
       ghiChu = ''
     } = data;
@@ -22,7 +22,7 @@ class OrderService {
       maNhanVien,
       ngayLap: new Date(),
       tongTienHang: 0,
-      khuyenMai,
+      //xkhuyenMai,
       tongTien: 0,
       nguoiGiao,
       thongTinNguoiNhan,
@@ -45,7 +45,7 @@ class OrderService {
       .find()
       .populate('maKhachHang', 'ten')
       .populate('maNhanVien', 'ten')
-      .populate('khuyenMai.maKhuyenMai', 'ten')
+      //.populate('khuyenMai.maKhuyenMai', 'ten')
       .sort({ ngayTao: -1 });
   }
 
@@ -55,9 +55,20 @@ class OrderService {
       .findById(id)
       .populate('maKhachHang', 'ten')
       .populate('maNhanVien', 'ten')
-      .populate('khuyenMai.maKhuyenMai', 'ten');
+      //.populate('khuyenMai.maKhuyenMai', 'ten');
     if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
     return order;
+  }
+
+  // Lấy danh sách đơn hàng theo mã khách hàng
+  async getByCustomerId(maKhachHang: string) {
+    const orders = await orderModel
+      .find({ maKhachHang })
+      .populate('maNhanVien', 'ten')
+      //.populate('khuyenMai.maKhuyenMai', 'ten')
+      .sort({ ngayTao: -1 });
+
+    return orders;
   }
 
   // Cập nhật trạng thái đơn hàng
