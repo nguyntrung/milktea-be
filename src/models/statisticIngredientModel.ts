@@ -1,9 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { DonViTinh } from '../types/common';
 
 export interface IstatisticIngredient extends Document {
   _id: string;
   ngay: Date;
   maNguyenLieu: string;
+  donViTinh: DonViTinh;
   soLuongBanDau: number;
   soLuongBan: number;
   soLuongNhap: number;
@@ -16,16 +18,17 @@ export interface IstatisticIngredient extends Document {
 export interface StatisticIngredientInput {
   ngay: Date;
   maNguyenLieu: string;
+  donViTinh: DonViTinh;
   soLuongBanDau: number;
   soLuongBan: number;
   soLuongNhap: number;
   soLuongHaoHut: number;
-  soLuongTon: number;
 }
 
 const statisticIngredientSchema = new Schema<IstatisticIngredient>({
   ngay: { type: Date, required: true },
   maNguyenLieu: { type: String, ref: 'NguyenLieu', required: true },
+  donViTinh: { type: String, enum: Object.values(DonViTinh), required: true },
   soLuongBanDau: { type: Number, default: 0, required: true },
   soLuongBan: { type: Number, default: 0, required: true },
   soLuongNhap: { type: Number, default: 0, required: true },

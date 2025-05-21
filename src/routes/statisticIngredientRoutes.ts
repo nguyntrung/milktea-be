@@ -1,13 +1,13 @@
 import express from 'express';
 import statisticIngredientController from '../controllers/statisticIngredientController';
-import { adminOnly } from '../middleware/authMiddleware';
+import { protect,adminOnly } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Lấy toàn bộ thống kê nguyên liệu chỉ được với Admin (có thể lọc sau này qua query)
-router.get('/', adminOnly, statisticIngredientController.getAll);
 
-// Lấy thống kê nguyên liệu theo ID
-router.get('/:id', adminOnly, statisticIngredientController.getById);
+router.get('/', protect, adminOnly, statisticIngredientController.getAll);
+router.get('/:id', protect, adminOnly, statisticIngredientController.getById);
+router.post('/', protect, adminOnly, statisticIngredientController.create);
+router.put('/', protect, adminOnly, statisticIngredientController.update);
 
 export default router;

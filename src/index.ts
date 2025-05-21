@@ -15,6 +15,7 @@ import promotionRoutes from './routes/promotionRoutes';
 import supplierRoutes from './routes/supplierRoutes';
 import orderIngredientRoutes from './routes/orderIngredientRoutes';
 import orderIngredientDetailRoutes from './routes/orderIngredientDetailRoutes';
+import statisticIngredientRoutes from './routes/statisticIngredientRoutes';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use('/api/promotion', promotionRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/orderIngredient', orderIngredientRoutes);
 app.use('/api/orderIngredientDetail', orderIngredientDetailRoutes);
+app.use('/api/statisticIngredient', statisticIngredientRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {
