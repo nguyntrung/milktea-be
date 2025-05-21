@@ -6,7 +6,7 @@ export enum DonViTinh {
   CHAI = 'chai',
   LON = 'lon',
   VIEN = 'viên',
-  GAM = 'gam',
+  GRAM = 'gram',
   KG = 'kg',
   ML = 'ml',
   LIT = 'lít'

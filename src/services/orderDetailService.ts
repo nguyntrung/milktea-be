@@ -1,5 +1,5 @@
 import orderDetailModel, { IOrderDetail, OrderDetailInput } from '../models/orderDetailModel';
-import orderModel from '../models/orderModel';
+import statisticIngredientService from './statisticIngredientService';
 import orderService from './orderService';
 import productModel from '../models/productModel';
 import toppingModel from '../models/toppingModel';
@@ -43,7 +43,7 @@ class OrderDetailService {
 
 
     // Tính thành tiền
-    const thanhTien = (donGia * data.soLuong) + tongTopping;
+    const thanhTien = (donGia + tongTopping) * data.soLuong;
 
     const orderDetail = new orderDetailModel({
       ...data,
@@ -55,12 +55,16 @@ class OrderDetailService {
     });
 
     await orderDetail.save();
+
     //Tính lại tổng tiền đơn hàng
     const allDetails = await orderDetailModel.find({ maHoaDon });
     const tongTienHang = allDetails.reduce((sum, d) => sum + d.thanhTien, 0);
 
     // Gọi OrderService để tính lại tổng tiền (có khuyến mãi)
     await orderService.recalculateTotal(data.maHoaDon);
+
+    // **Cập nhật trừ kho nguyên liệu**
+    await statisticIngredientService.deductIngredientsByOrder(data.maHoaDon);
 
     return orderDetail;
   }
@@ -100,6 +104,9 @@ class OrderDetailService {
     }
       // Cập nhật lại tổng tiền đơn hàng
     await orderService.recalculateTotal(updated.maHoaDon);
+
+    // ** Gọi trừ kho nguyên liệu **
+    await statisticIngredientService.deductIngredientsByOrder(updated.maHoaDon);
     
     return updated;
   }
@@ -117,6 +124,9 @@ class OrderDetailService {
 
     // Sau khi xóa thì cập nhật lại tổng tiền đơn hàng
     await orderService.recalculateTotal(maHoaDon);
+
+    // ** Gọi trừ kho nguyên liệu **
+    await statisticIngredientService.deductIngredientsByOrder(maHoaDon);
 
     return { message: 'Xóa chi tiết đơn hàng thành công' };
   }
