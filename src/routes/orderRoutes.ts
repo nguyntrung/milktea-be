@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/', protect, orderController.create); // Tạo đơn hàng mới
 router.put('/:id/status', protect, adminOnly, orderController.updateStatus); // Cập nhật trạng thái đơn hàng (người dùng hoặc admin)
 router.patch('/:id/deactivate', protect, adminOnly, orderController.deactivate);
-router.get('/auth/:userId', protect, adminOnly, orderController.getByCustomerId); // Lấy đơn hàng theo ID
+router.get('/auth/:userId', protect, orderController.getByCustomerId); // Lấy đơn hàng theo ID
 
 // Routes có thể truy cập cho tất cả người dùng đã xác thực
 router.get('/', protect, orderController.getAll); // Lấy tất cả đơn hàng

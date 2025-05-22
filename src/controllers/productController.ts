@@ -50,6 +50,22 @@ class ProductController {
     }
   }
 
+  async getByCategoryId(req: Request, res: Response) {
+  try {
+    const { maDanhMuc } = req.params;
+    const products = await productService.getByCategoryId(maDanhMuc);
+    res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error: any) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
   async update(req: Request, res: Response) {
     try {
       const id = req.params.id;

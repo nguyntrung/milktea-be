@@ -36,11 +36,11 @@ app.use('/api/toppings', toppingRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/carts', cartRoutes);
 app.use('/api/order', orderRoutes);
-app.use('/api/orderDetail', orderDetailRoutes);
+app.use('/api/order-detail', orderDetailRoutes);
 app.use('/api/promotion', promotionRoutes);
 app.use('/api/suppliers', supplierRoutes);
-app.use('/api/orderIngredient', orderIngredientRoutes);
-app.use('/api/orderIngredientDetail', orderIngredientDetailRoutes);
+app.use('/api/order-ingredients', orderIngredientRoutes);
+app.use('/api/order-ingredient-detail', orderIngredientDetailRoutes);
 app.use('/api/statisticIngredient', statisticIngredientRoutes);
 
 // Sample route

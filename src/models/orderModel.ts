@@ -70,7 +70,7 @@ const orderSchema = new Schema<IOrder>({
 });
 
 orderSchema.index({ maKhachHang: 1 });
-orderSchema.index({ 'trangThai.choXuLy': 1 });
+orderSchema.index({ 'trangThai.choXacNhan': 1 });
 orderSchema.index({ ngayTao: 1 });
 
 export default mongoose.model<IOrder>('DonHang', orderSchema);

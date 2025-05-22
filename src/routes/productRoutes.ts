@@ -12,5 +12,6 @@ router.delete('/:id', productController.delete);
 // Routes accessible to all authenticated users
 router.get('/', productController.getAll);
 router.get('/:id', productController.getById);
+router.get('/category/:maDanhMuc', productController.getByCategoryId);
 
 export default router;

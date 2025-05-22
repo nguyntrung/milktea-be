@@ -30,7 +30,7 @@ class OrderService {
       thanhToan,
       lichSuTrangThai: [{
         thoiGian: new Date(),
-        trangThaiDonHang: TrangThaiDonHang.CHO_XU_LY,
+        trangThaiDonHang: TrangThaiDonHang.CHO_XAC_NHAN,
       }],
       ghiChu,
       ngayTao: new Date(),
