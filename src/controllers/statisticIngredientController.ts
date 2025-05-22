@@ -95,6 +95,30 @@ class StatisticIngredientController {
       });
     }
   }
+
+  async getDailyStatistics(req: Request, res: Response): Promise<void> {
+    try {
+      const month = parseInt(req.query.month as string);
+      const year = parseInt(req.query.year as string);
+
+      if (isNaN(month) || isNaN(year)) {
+        res.status(400).json({
+          success: false,
+          message: 'Thiếu hoặc sai định dạng month hoặc year',
+        });
+        return;
+      }
+
+      const data = await statisticIngredientService.getStatisticByDay(month, year);
+
+      res.status(200).json({ success: true, data });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || 'Lỗi máy chủ',
+      });
+    }
+  }
 }
 
 export default new StatisticIngredientController();

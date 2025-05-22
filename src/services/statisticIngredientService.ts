@@ -276,6 +276,55 @@ class StatisticIngredientService{
     ]);
     return result;
   }
+
+  async getStatisticByDay(thang: number, nam: number) {
+    const startDate = new Date(nam, thang - 1, 1);
+    const endDate = new Date(nam, thang, 1); // ngày đầu tháng sau
+
+    const result = await statisticIngredientModel.aggregate([
+      {
+        $match: {
+          ngay: { $gte: startDate, $lt: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            maNguyenLieu: '$maNguyenLieu',
+            ngay: {
+              $dateToString: { format: '%Y-%m-%d', date: '$ngay' }, // nhóm theo ngày
+            },
+          },
+          donViTinh: { $first: '$donViTinh' },
+          tenNguyenLieu: { $first: '$tenNguyenLieu' },
+          tongSoLuongBanDau: { $sum: '$soLuongBanDau' },
+          tongSoLuongNhap: { $sum: '$soLuongNhap' },
+          tongSoLuongBan: { $sum: '$soLuongBan' },
+          tongSoLuongHaoHut: { $sum: '$soLuongHaoHut' },
+          tongSoLuongTon: { $sum: '$soLuongTon' },
+        },
+      },
+      {
+        $sort: { '_id.ngay': 1 }, // sắp xếp theo ngày tăng dần
+      },
+      {
+        $project: {
+          ngay: '$_id.ngay',
+          maNguyenLieu: '$_id.maNguyenLieu',
+          tenNguyenLieu: 1,
+          donViTinh: 1,
+          tongSoLuongBanDau: 1,
+          tongSoLuongNhap: 1,
+          tongSoLuongBan: 1,
+          tongSoLuongHaoHut: 1,
+          tongSoLuongTon: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    return result;
+  }
 }
 
 export default new StatisticIngredientService();
