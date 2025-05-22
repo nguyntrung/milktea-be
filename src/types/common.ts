@@ -9,7 +9,8 @@ export enum DonViTinh {
   GRAM = 'gram',
   KG = 'kg',
   ML = 'ml',
-  LIT = 'lít'
+  LIT = 'lít',
+  MIENG = 'miếng',
 }
 
 // Định nghĩa các enum cho vai trò người dùng
@@ -41,7 +42,7 @@ export enum TrangThaiPhanHoi {
 
 // Định nghĩa enum cho trạng thái đơn hàng
 export enum TrangThaiDonHang {
-  CHO_XU_LY = 'choXuLy',        // Đơn hàng mới, đang chờ xác nhận
+  CHO_XAC_NHAN = 'choXacNhan',   // Đơn hàng mới, đang chờ xác nhận
   DANG_CHUAN_BI = 'dangChuanBi', // Đang chuẩn bị đơn hàng
   DANG_GIAO = 'dangGiao',        // Đang giao hàng
   DA_GIAO = 'daGiao',            // Đã giao hàng thành công

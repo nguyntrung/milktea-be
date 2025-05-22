@@ -70,6 +70,17 @@ class ProductService {
     return product;
   }
 
+  async getByCategoryId(maDanhMuc: string) {
+  const products = await productModel
+    .find({ maDanhMuc, hoatDong: true })
+    .populate('maDanhMuc', 'ten')
+    .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
+    .populate('toppingCoTheThem', 'ten gia')
+    .sort({ ngayTao: -1 });
+
+  return products;
+}
+
   async update(id: string, data: Partial<ProductInput>) {
     const product = await productModel.findById(id);
     if (!product) {
