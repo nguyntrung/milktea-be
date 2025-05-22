@@ -239,6 +239,43 @@ class StatisticIngredientService{
     await existing.save();
     return existing;
   }
+
+  // Thống kê nguyên liệu theo tháng (group theo maNguyenLieu)
+  async getStatisticByMonth(thang: number, nam: number) {
+    const startDate = new Date(nam, thang - 1, 1); // Đầu tháng
+    const endDate = new Date(nam, thang, 1);       // Đầu tháng tiếp theo
+
+    const result = await statisticIngredientModel.aggregate([
+      { $match: { ngay: { $gte: startDate, $lt: endDate } } },
+      { $sort: { ngay: 1 } },
+      {
+        $group: {
+          _id: '$maNguyenLieu',
+          donViTinh: { $first: '$donViTinh' },
+          tenNguyenLieu: { $first: '$tenNguyenLieu' },
+          soLuongBanDau: { $first: '$soLuongBanDau' },
+          tongSoLuongNhap: { $sum: '$soLuongNhap' },
+          tongSoLuongBan: { $sum: '$soLuongBan' },
+          tongSoLuongHaoHut: { $sum: '$soLuongHaoHut' },
+          soLuongTon: { $last: '$soLuongTon' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          maNguyenLieu: '$_id',
+          tenNguyenLieu: 1,
+          donViTinh: 1,
+          soLuongBanDau: 1,
+          tongSoLuongNhap: 1,
+          tongSoLuongBan: 1,
+          tongSoLuongHaoHut: 1,
+          soLuongTon: 1,
+        },
+      },
+    ]);
+    return result;
+  }
 }
 
 export default new StatisticIngredientService();
