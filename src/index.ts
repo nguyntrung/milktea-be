@@ -16,6 +16,9 @@ import supplierRoutes from './routes/supplierRoutes';
 import orderIngredientRoutes from './routes/orderIngredientRoutes';
 import orderIngredientDetailRoutes from './routes/orderIngredientDetailRoutes';
 import statisticIngredientRoutes from './routes/statisticIngredientRoutes';
+import reviewRoutes from './routes/reviewRoutes';
+import feedRoutes from './routes/feedbackRoutes';
+
 
 dotenv.config();
 
@@ -35,13 +38,15 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/toppings', toppingRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/carts', cartRoutes);
-app.use('/api/order', orderRoutes);
-app.use('/api/order-detail', orderDetailRoutes);
-app.use('/api/promotion', promotionRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/order-details', orderDetailRoutes);
+app.use('/api/promotions', promotionRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/order-ingredients', orderIngredientRoutes);
-app.use('/api/order-ingredient-detail', orderIngredientDetailRoutes);
-app.use('/api/statisticIngredient', statisticIngredientRoutes);
+app.use('/api/order-ingredient-details', orderIngredientDetailRoutes);
+app.use('/api/statisticIngredients', statisticIngredientRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/feedbacks', feedRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {

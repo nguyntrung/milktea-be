@@ -10,6 +10,7 @@ export interface IOrderDetail extends Document {
     tenSize: string;
     giaTang: number;
   };
+  hinhAnh: string;
   tuyChon: string[];
   topping: {
     maTopping: string;
@@ -30,6 +31,7 @@ export interface OrderDetailInput {
     tenSize: string;
     giaTang: number;
   };
+  hinhAnh: string;
   tuyChon: string[];
   topping: {
     maTopping: string;
@@ -47,6 +49,7 @@ const orderDetailSchema = new Schema<IOrderDetail>({
     tenSize: { type: String, required: true },
     giaTang: { type: Number, required: true },
   },
+  hinhAnh: { type: String, required: true },
   tuyChon: [{ type: String }],
   topping: [
     {

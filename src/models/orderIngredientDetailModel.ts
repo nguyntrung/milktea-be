@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { DonViTinh } from '../types/common';
 
 export interface IOrderIngredientDetail extends Document {
   maDonDat: string;
@@ -6,6 +7,7 @@ export interface IOrderIngredientDetail extends Document {
   soLuong: number;
   donGia: number; 
   thanhTien: number;
+  donViTinh: DonViTinh;
   ngayTao: Date;
   ngayCapNhat: Date;
 }
@@ -19,10 +21,11 @@ export interface OrderIngredientDetailInput {
 
 const OrderIngredientDetailSchema: Schema = new Schema<IOrderIngredientDetail>({
   maDonDat: { type: String, ref: 'DonDatNguyenLieu', required: true },
-  maNguyenLieu: { type: String, required: true },
+  maNguyenLieu: { type: String, ref: 'NguyenLieu', required: true },
   soLuong: { type: Number, required: true },
   donGia: { type: Number, required: true },
   thanhTien: { type: Number, required: true },
+  donViTinh: { type: String, enum: Object.values(DonViTinh), required: true },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now }
 });

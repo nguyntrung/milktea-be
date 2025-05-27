@@ -18,11 +18,7 @@ export interface IstatisticIngredient extends Document {
 export interface StatisticIngredientInput {
   ngay: Date;
   maNguyenLieu: string;
-  donViTinh: DonViTinh;
   soLuongBanDau: number;
-  soLuongBan: number;
-  soLuongNhap: number;
-  soLuongHaoHut: number;
 }
 
 const statisticIngredientSchema = new Schema<IstatisticIngredient>({

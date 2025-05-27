@@ -119,7 +119,34 @@ class OrderController {
         message: error.message,
       });
     }
-  }  
+  }
+  
+  //Thống kê theo điều kiện
+  async filterOrdersByDate(req: Request, res: Response) {
+    try {
+      const day = req.query.day ? parseInt(req.query.day as string) : undefined;
+      const month = req.query.month ? parseInt(req.query.month as string) : undefined;
+      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+
+      if (!year || isNaN(year)) {
+        res.status(400).json({ success: false, message: 'Phải cung cấp năm hợp lệ để lọc' });
+        return;
+      }
+
+      const data = await orderService.filterByDate({ ngay: day, thang: month, nam: year });
+
+      res.status(200).json({
+        success: true,
+        data
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || 'Lỗi máy chủ',
+      });
+    }
+  }
+
 }
 
 export default new OrderController();
