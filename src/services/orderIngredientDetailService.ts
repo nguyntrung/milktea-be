@@ -1,11 +1,20 @@
 import orderIngredientDetailModel, { OrderIngredientDetailInput } from '../models/orderIngredientDetailModel';
 import orderIngredientModel from '../models/orderIngredientModel';
+import ingredientModel from '../models/ingredientModel';
 import { BadRequestError } from '../utils/errors';
 
 class OrderIngredientDetailService {
   // Tạo mới chi tiết đơn đặt nguyên liệu
   async create(data: OrderIngredientDetailInput) {
     const { maDonDat, maNguyenLieu, soLuong, donGia } = data;
+
+    // Tìm nguyên liệu theo mã để lấy donViTinh
+    const ingredient = await ingredientModel.findById(maNguyenLieu);
+    if (!ingredient) {
+      throw new BadRequestError('Nguyên liệu không tồn tại');
+    }
+
+     const donViTinh = ingredient.donViTinh;
 
     const thanhTien = donGia * soLuong; // Tính thanh tiền mặc định
 
@@ -15,6 +24,7 @@ class OrderIngredientDetailService {
       soLuong,
       donGia,
       thanhTien,
+      donViTinh,
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });

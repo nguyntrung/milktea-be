@@ -18,6 +18,9 @@ class OrderDetailService {
     // Tính đơn giá
     const donGia = product.giaCoBan + data.kichCo.giaTang;
 
+    //Gán hình ảnh của sản phẩm
+    const hinhAnhProduct = Array.isArray(product.hinhAnh) ? product.hinhAnh[0] || null : product.hinhAnh || null;
+
     // Tính tổng topping
     let tongTopping = 0;
     for (const topping of data.topping) {
@@ -48,6 +51,7 @@ class OrderDetailService {
     const orderDetail = new orderDetailModel({
       ...data,
       topping: toppingWithGia,
+      hinhAnh: hinhAnhProduct,
       donGia,
       thanhTien,
       ngayTao: new Date(),

@@ -8,6 +8,7 @@ export interface IIngredient extends Document {
   donViTinh: DonViTinh;
   maNhaCungCap: string | string[];
   hoatDong: boolean;
+  nguyenLieuHaoHut: boolean;
   ngayTao: Date;
   ngayCapNhat: Date;
 }
@@ -16,6 +17,7 @@ export interface IngredientInput {
   ten: string;
   donViTinh: DonViTinh;
   maNhaCungCap: string | string[];
+  nguyenLieuHaoHut: boolean;
 }
 
 // Define schema
@@ -24,6 +26,7 @@ const ingredientSchema = new Schema<IIngredient>({
   donViTinh: { type: String, enum: Object.values(DonViTinh), required: true },
   maNhaCungCap: { type: [String], ref: 'NhaCungCap', required: true },
   hoatDong: { type: Boolean, default: true },
+  nguyenLieuHaoHut: { type: Boolean, default: false },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });

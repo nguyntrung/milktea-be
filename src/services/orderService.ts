@@ -143,6 +143,36 @@ class OrderService {
 
     return order;
   }
+
+  //lọc đơn hàng theo điều kiện
+  async filterByDate({ ngay, thang, nam }: { ngay?: number, thang?: number, nam: number }) {
+    let startDate: Date;
+    let endDate: Date;
+
+    if (ngay && thang) {
+      // Lọc theo ngày cụ thể
+      startDate = new Date(Date.UTC(nam, thang - 1, ngay));
+      endDate = new Date(Date.UTC(nam, thang - 1, ngay + 1));
+    } else if (thang) {
+      // Lọc theo tháng
+      startDate = new Date(Date.UTC(nam, thang - 1, 1));
+      endDate = new Date(Date.UTC(nam, thang, 1));
+    } else {
+      // Lọc theo năm
+      startDate = new Date(Date.UTC(nam, 0, 1));
+      endDate = new Date(Date.UTC(nam + 1, 0, 1));
+    }
+
+    const orders = await orderModel.find({
+      ngayTao: { $gte: startDate, $lt: endDate }
+    })
+    .populate('maKhachHang', 'ten')
+    .populate('maNhanVien', 'ten')
+    .sort({ ngayTao: -1 });
+
+    return orders;
+  }
+
 }
 
 export default new OrderService();
