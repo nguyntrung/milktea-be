@@ -31,7 +31,6 @@ export interface OrderDetailInput {
     tenSize: string;
     giaTang: number;
   };
-  hinhAnh: string;
   tuyChon: string[];
   topping: {
     maTopping: string;
