@@ -18,7 +18,7 @@ import orderIngredientDetailRoutes from './routes/orderIngredientDetailRoutes';
 import statisticIngredientRoutes from './routes/statisticIngredientRoutes';
 import reviewRoutes from './routes/reviewRoutes';
 import feedRoutes from './routes/feedbackRoutes';
-
+import storeRoutes from './routes/storeRoutes';
 
 dotenv.config();
 
@@ -44,9 +44,10 @@ app.use('/api/promotions', promotionRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/order-ingredients', orderIngredientRoutes);
 app.use('/api/order-ingredient-details', orderIngredientDetailRoutes);
-app.use('/api/statisticIngredients', statisticIngredientRoutes);
+app.use('/api/statistic-ingredients', statisticIngredientRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/feedbacks', feedRoutes);
+app.use('/api/store', storeRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {
