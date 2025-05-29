@@ -48,7 +48,7 @@ const orderDetailSchema = new Schema<IOrderDetail>({
     tenSize: { type: String, required: true },
     giaTang: { type: Number, required: true },
   },
-  hinhAnh: { type: String, required: true },
+  hinhAnh: { type: String},
   tuyChon: [{ type: String }],
   topping: [
     {

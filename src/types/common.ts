@@ -91,3 +91,13 @@ export enum LoaiGiaoDich {
   CONG = 'cong',     // Cộng
   TRU = 'tru',       // Trừ
 }
+
+// Định nghĩa enum cho loại thông báo
+export enum LoaiThongBao {
+  DON_HANG_MOI = 'donHangMoi',
+  TRANG_THAI_DON_HANG = 'trangThaiDonHang', // Dùng khi đơn hàng chuyển trạng thái
+  THANH_TOAN_THANH_CONG = 'thanhToanThanhCong',
+  KHUYEN_MAI_MOI = 'khuyenMaiMoi',
+  NHAC_LICH_GIAO_HANG = 'nhacLichGiaoHang',
+  LOI_HE_THONG = 'loiHeThong'
+}

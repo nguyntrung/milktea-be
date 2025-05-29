@@ -1,8 +1,10 @@
 import orderModel, { IOrder, OrderInput } from '../models/orderModel';
 import orderDetailModel from '../models/orderDetailModel';
-import promotionModel from '../models/promotionModel';
+import promotionService from './promotionService';
 import { BadRequestError } from '../utils/errors';
 import { TrangThaiDonHang, LoaiKhuyenMai } from '../types/common';
+import notificationService from './notificationService';
+import { LoaiThongBao } from '../types/common';
 
 class OrderService {
   // Tạo đơn hàng mới
@@ -36,6 +38,21 @@ class OrderService {
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });
+
+    await this.recalculateTotal(order._id?.toString() ?? '');
+
+    //Tạo thông báo
+    try {
+      await notificationService.create({
+        tieuDe: 'Đơn hàng mới',
+        noiDung: `Khách hàng đã tạo đơn hàng mới.`,
+        loaiThongBao: LoaiThongBao.DON_HANG_MOI,
+        maNguoiNhan: maNhanVien, // hoặc ID admin xử lý đơn hàng
+        lienKet: `/orders/${order._id}`,
+      });
+    } catch (error) {
+      console.error('Không thể tạo thông báo đơn hàng mới:', error);
+    }
 
     return await orderModel.findById(order._id)
       .populate('maKhachHang', 'ten')
@@ -81,6 +98,19 @@ class OrderService {
     order.ngayCapNhat = new Date();
     await order.save();
 
+    // Gửi thông báo đến khách hàng
+    try {
+      await notificationService.create({
+        tieuDe: 'Cập nhật trạng thái đơn hàng',
+        noiDung: `Đơn hàng của bạn đã được cập nhật sang trạng thái: ${trangThaiDonHang}`,
+        loaiThongBao: LoaiThongBao.TRANG_THAI_DON_HANG,
+        maNguoiNhan: order.maKhachHang,
+        lienKet: `/orders/${order._id}`,
+      });
+    } catch (error) {
+      console.error('Không thể tạo thông báo cập nhật trạng thái:', error);
+    }
+
     return order;
   }
 
@@ -115,23 +145,7 @@ class OrderService {
     const details = await orderDetailModel.find({ maHoaDon });
     const tongTienHang = details.reduce((sum, d) => sum + d.thanhTien, 0);
 
-    let tongKhuyenMai = 0;
-
-    if (Array.isArray(order.khuyenMai) && order.khuyenMai.length > 0) {
-      for (const maKM of order.khuyenMai) {
-        const kmDoc = await promotionModel.findById(maKM);
-        if (!kmDoc) continue;
-
-        if (kmDoc.loaiKhuyenMai === LoaiKhuyenMai.GIAM_PHAN_TRAM) {
-          tongKhuyenMai += (tongTienHang * kmDoc.giaTri) / 100;
-        } else if (kmDoc.loaiKhuyenMai === LoaiKhuyenMai.GIAM_TIEN) {
-          tongKhuyenMai += kmDoc.giaTri;
-        }
-      }
-
-      // Không để khuyến mãi vượt quá tổng tiền hàng
-      if (tongKhuyenMai > tongTienHang) tongKhuyenMai = tongTienHang;
-    }
+    const tongKhuyenMai = await promotionService.calculateDiscounts(order.khuyenMai, tongTienHang);
 
     const tongTien = tongTienHang - tongKhuyenMai;
 
