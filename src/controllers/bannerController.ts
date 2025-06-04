@@ -1,16 +1,14 @@
 import { Request, Response } from 'express';
-import categoryService from '../services/categoryService';
-import { CategoryInput } from '../models/categoryModel';
+import bannerService from '../services/bannerService';
+import { BannerInput } from '../models/bannerModel';
 
-class CategoryController {
-  async create(req: Request, res: Response) {
+class BannerController {
+  async getAll(req: Request, res: Response) {
     try {
-      const data: CategoryInput = req.body;
-      const file = req.file;
-      const category = await categoryService.create(data, file);
-      res.status(201).json({
+      const banners = await bannerService.getAll();
+      res.status(200).json({
         success: true,
-        data: category,
+        data: banners,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -20,12 +18,16 @@ class CategoryController {
     }
   }
 
-  async getAll(req: Request, res: Response) {
+  async getByPositionAndStatus(req: Request, res: Response) {
     try {
-      const categories = await categoryService.getAll();
+      const { viTri, hienThi } = req.query;
+      const banners = await bannerService.getByPositionAndStatus(
+        viTri as string,
+        hienThi === 'true'
+      );
       res.status(200).json({
         success: true,
-        data: categories,
+        data: banners,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -38,10 +40,27 @@ class CategoryController {
   async getById(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const category = await categoryService.getById(id);
+      const banner = await bannerService.getById(id);
       res.status(200).json({
         success: true,
-        data: category,
+        data: banner,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async create(req: Request, res: Response) {
+    try {
+      const data: BannerInput = req.body;
+      const file = req.file;
+      const banner = await bannerService.create(data, file);
+      res.status(201).json({
+        success: true,
+        data: banner,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -54,12 +73,12 @@ class CategoryController {
   async update(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const data: Partial<CategoryInput> = req.body;
+      const data: Partial<BannerInput> = req.body;
       const file = req.file;
-      const category = await categoryService.update(id, data, file);
+      const banner = await bannerService.update(id, data, file);
       res.status(200).json({
         success: true,
-        data: category,
+        data: banner,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -69,13 +88,13 @@ class CategoryController {
     }
   }
 
-  async deactivate(req: Request, res: Response) {
+  async delete(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const result = await categoryService.deactivate(id);
+      await bannerService.delete(id);
       res.status(200).json({
         success: true,
-        data: result,
+        message: 'Xóa banner thành công',
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({
@@ -86,4 +105,4 @@ class CategoryController {
   }
 }
 
-export default new CategoryController();
+export default new BannerController();

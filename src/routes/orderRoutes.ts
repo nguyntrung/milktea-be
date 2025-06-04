@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Routes với quyền truy cập admin chỉ cho create, update, delete
 router.post('/', protect, orderController.create); // Tạo đơn hàng mới
-router.put('/:id/status', protect, adminOnly, orderController.updateStatus);
+router.put('/:id/status', protect, orderController.updateStatus);
 router.patch('/:id/deactivate', protect, adminOnly, orderController.deactivate);
 router.get('/auth/:userId', protect, orderController.getByCustomerId);
 router.get('/fillter', protect, orderController.filterOrdersByDate);

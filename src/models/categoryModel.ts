@@ -4,6 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ICategory extends Document {
   _id: string;
   ten: string;
+  hinhAnh: string;
   hoatDong: boolean;
   ngayTao: Date;
   ngayCapNhat: Date;
@@ -11,11 +12,13 @@ export interface ICategory extends Document {
 
 export interface CategoryInput {
   ten: string;
+  hinhAnh?: string;
 }
 
 // Define schema
 const categorySchema = new Schema<ICategory>({
   ten: { type: String, required: true, unique: true },
+  hinhAnh: { type: String, default: '' },
   hoatDong: { type: Boolean, default: true },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
