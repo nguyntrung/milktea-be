@@ -1,4 +1,5 @@
 import notificationModel, { NotificationInput, INotification } from '../models/notificationModel';
+import userModel from '../models/userModel';
 import { TrangThaiPhanHoi } from '../types/common';
 import { BadRequestError } from '../utils/errors';
 
@@ -16,12 +17,27 @@ class NotificationService {
     return notification;
   }
 
+  // Gửi thông báo cho tất cả người dùng
+    async createForAllUsers(data: Omit<NotificationInput, 'maNguoiNhan'>): Promise<void> {
+      const allUsers = await userModel.find({}, '_id');
+      const notifications = allUsers.map(user => ({
+        ...data,
+        maNguoiNhan: user._id,
+        daDoc: false,
+        trangThai: data.trangThai || TrangThaiPhanHoi.CHUA_DOC,
+        ngayTao: new Date(),
+        ngayCapNhat: new Date(),
+      }));
+
+      await notificationModel.insertMany(notifications);
+    }
+
   // Lấy tất cả thông báo
   async getAll(): Promise<INotification[]> {
     return await notificationModel
       .find()
       .sort({ ngayTao: -1 })
-      .populate('nguoiNhan', 'ten'); // nếu bạn có ref tới người dùng
+      .populate('maNguoiNhan', 'ten'); // nếu bạn có ref tới người dùng
   }
 
   // Lấy tất cả thông báo của người dùng

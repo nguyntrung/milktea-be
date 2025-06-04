@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import orderIngredientDetailModel, { OrderIngredientDetailInput } from '../models/orderIngredientDetailModel';
 import orderIngredientModel from '../models/orderIngredientModel';
 import ingredientModel from '../models/ingredientModel';
@@ -9,22 +10,21 @@ class OrderIngredientDetailService {
     const { maDonDat, maNguyenLieu, soLuong, donGia } = data;
 
     // Tìm nguyên liệu theo mã để lấy donViTinh
-    const ingredient = await ingredientModel.findById(maNguyenLieu);
+    const ingredient = await ingredientModel.findOne({ _id: maNguyenLieu });
     if (!ingredient) {
       throw new BadRequestError('Nguyên liệu không tồn tại');
     }
-
-     const donViTinh = ingredient.donViTinh;
 
     const thanhTien = donGia * soLuong; // Tính thanh tiền mặc định
 
     const orderIngredientDetail = await orderIngredientDetailModel.create({
       maDonDat,
       maNguyenLieu,
+      tenNguyenLieu: ingredient.ten,
       soLuong,
       donGia,
-      thanhTien,
-      donViTinh,
+      thanhTien: thanhTien,
+      donViTinh: ingredient.donViTinh,
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });
@@ -35,20 +35,29 @@ class OrderIngredientDetailService {
     return orderIngredientDetail;
   }
 
-  // Hàm tính và cập nhật tổng tiền vào đơn đặt nguyên liệu
-  async calculateAndUpdateTongTien(maDonDat: string) {
-    const details = await orderIngredientDetailModel.find({ maDonDat });
+   // Tạo nhiều chi tiết đơn đặt nguyên liệu
+    async createMany(data: OrderIngredientDetailInput[]) {
+      const results = [];
+      for (const item of data) {
+        const created = await this.create(item);
+        results.push(created);
+      }
+      return results;
+    }
 
-    const tongTien = details.reduce((sum, detail) => sum + detail.thanhTien, 0);
+    // Tính lại tổng tiền đơn đặt
+    async calculateAndUpdateTongTien(maDonDat: string) {
+      const details = await orderIngredientDetailModel.find({ maDonDat });
 
-    // Cập nhật vào đơn đặt nguyên liệu
-    await orderIngredientModel.findOneAndUpdate(
-      { maDonDat },
-      { tongTien, ngayCapNhat: new Date() },
-      { new: true }
-    );
-  }
+      const tongTien = details.reduce((sum, d) => sum + d.thanhTien, 0);
 
+      await orderIngredientModel.findByIdAndUpdate(
+        maDonDat,
+        { tongTien, ngayCapNhat: new Date() },
+        { new: true }
+      );
+    }
+    
   // Lấy tất cả chi tiết đơn đặt nguyên liệu
   async getAll() {
     return await orderIngredientDetailModel.find().sort({ ngayTao: -1 });
@@ -70,9 +79,9 @@ class OrderIngredientDetailService {
       throw new BadRequestError('Chi tiết đơn đặt nguyên liệu không tồn tại');
     }
 
-    let thanhTien = data.donGia * data.soLuong;
+    const thanhTien = data.donGia * data.soLuong;
 
-    const updatedOrderIngredientDetail = await orderIngredientDetailModel.findByIdAndUpdate(
+    const updated = await orderIngredientDetailModel.findByIdAndUpdate(
       id,
       {
         ...data,
@@ -82,16 +91,24 @@ class OrderIngredientDetailService {
       { new: true }
     );
 
-    return updatedOrderIngredientDetail;
+    // Sau khi cập nhật => cập nhật tổng tiền đơn đặt
+    await this.calculateAndUpdateTongTien(orderIngredientDetail.maDonDat);
+
+    return updated;
   }
 
+  // Xóa chi tiết
   async delete(id: string) {
-    const orderIngredientDetail = await orderIngredientDetailModel.findById(id);
-    if (!orderIngredientDetail) {
+    const detail = await orderIngredientDetailModel.findById(id);
+    if (!detail) {
       throw new BadRequestError('Chi tiết đơn đặt nguyên liệu không tồn tại');
     }
 
     await orderIngredientDetailModel.findByIdAndDelete(id);
+
+    // Sau khi xóa => cập nhật tổng tiền
+    await this.calculateAndUpdateTongTien(detail.maDonDat);
+
     return { message: 'Xóa chi tiết đơn đặt nguyên liệu thành công' };
   }
 }

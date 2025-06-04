@@ -6,6 +6,7 @@ import orderModel from "../models/orderModel";
 import orderDetailModel from "../models/orderDetailModel";
 import orderIngredientDetailModel from "../models/orderIngredientDetailModel";
 import { BadRequestError } from "../utils/errors";
+import { TrangThaiDonHang } from '../types/common';
 import {convertToBaseUnit} from "../types/helpper"
 
 class StatisticIngredientService{
@@ -16,7 +17,15 @@ class StatisticIngredientService{
   }
 
   async createStatistic(input: StatisticIngredientInput) {
-    const { ngay, maNguyenLieu, soLuongBanDau } = input;
+    const { ngay, maNguyenLieu } = input;
+    let soLuongBanDau = input.soLuongBanDau;
+
+    // Nếu không truyền vào soLuongBanDau, lấy từ thống kê hôm trước
+    if (typeof soLuongBanDau !== 'number') {
+      const ngayHomQua = new Date(this.normalizeDate(ngay).getTime() - 24 * 60 * 60 * 1000);
+      const prevStat = await statisticIngredientModel.findOne({ ngay: ngayHomQua, maNguyenLieu });
+      soLuongBanDau = prevStat ? prevStat.soLuongTon : 0;
+    }
 
     const dateKey = this.normalizeDate(ngay);
     const nextDate = new Date(dateKey.getTime() + 24 * 60 * 60 * 1000); // ngày hôm sau UTC
@@ -79,13 +88,21 @@ class StatisticIngredientService{
     }
 
     //Tính tồn kho
-    const soLuongHaoHut = 0;
+    let soLuongHaoHut = 0;
+    if (ingredient.nguyenLieuHaoHut && typeof input.soLuongHaoHut === 'number') {
+        soLuongHaoHut = input.soLuongHaoHut;
+      }
     const soLuongTon = soLuongBanDau + soLuongNhap - soLuongBan - soLuongHaoHut;
+
+    if (soLuongTon < 0) {
+      throw new BadRequestError(`Không đủ nguyên liệu để làm sản phẩm. Số lượng tồn kho sẽ bị âm (${soLuongTon}).`);
+    }
 
     //Tạo thống kê
     const newStat = await statisticIngredientModel.create({
       ngay: dateKey,
       maNguyenLieu,
+      tenNguyenLieu: ingredient.ten,
       donViTinh: ingredient.donViTinh,
       soLuongBanDau,
       soLuongNhap,
@@ -95,7 +112,7 @@ class StatisticIngredientService{
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });
-
+    
     return newStat;
   }
 
@@ -201,6 +218,19 @@ class StatisticIngredientService{
   async deductIngredientsByOrder(maHoaDon: string, ngay: Date = new Date()) {
     const dateKey = this.normalizeDate(ngay);
 
+    //Lấy đơn hàng
+    const order = await orderModel.findById(maHoaDon);
+    if (!order) {
+      throw new BadRequestError(`Không tìm thấy đơn hàng với ID: ${maHoaDon}`);
+    }
+
+    //Lấy trạng thái mới nhất
+    const latestStatus = order.lichSuTrangThai[order.lichSuTrangThai.length - 1]?.trangThaiDonHang;
+
+    const cacTrangThaiChoPhepTruKho: TrangThaiDonHang[] = [
+      TrangThaiDonHang.DANG_CHUAN_BI
+    ];
+
     const ingredientUsageMap = await this.calculateIngredientsUsed(maHoaDon);
 
     for (const maNguyenLieu in ingredientUsageMap) {
@@ -233,6 +263,9 @@ class StatisticIngredientService{
       }
 
       stat.soLuongTon = stat.soLuongBanDau + stat.soLuongNhap - stat.soLuongBan - stat.soLuongHaoHut;
+      if (stat.soLuongTon < 0) {
+        throw new BadRequestError(`Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${stat.soLuongTon})`);
+      }
 
       await stat.save();
     }
@@ -439,13 +472,15 @@ class StatisticIngredientService{
     return result;
   }
 
-
-  //Thống kê doanh thu theo tháng
+  // 1) Thống kê doanh thu & số lượng bán theo THÁNG
+  // --------------------------------------------------------
   async getRevenueByMonth(month: number, year: number) {
+    // 1.1) Xác định ranh giới ngày tháng (UTC)
     const startDate = new Date(Date.UTC(year, month - 1, 1));
-    const endDate = new Date(Date.UTC(year, month, 1));
+    const endDate   = new Date(Date.UTC(year, month, 1));
 
-    const result = await orderModel.aggregate([
+    // 1.2) Tính tổng doanh thu từ collection 'donhangs'
+    const doanhThuAgg = await orderModel.aggregate([
       {
         $match: {
           ngayTao: { $gte: startDate, $lt: endDate },
@@ -457,27 +492,69 @@ class StatisticIngredientService{
           _id: null,
           tongDoanhThu: { $sum: '$tongTien' }
         }
-      },
+      }
+    ]);
+    const tongDoanhThu = doanhThuAgg[0]?.tongDoanhThu || 0;
+
+    // 1.3) Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
+    const sanPhamAgg = await orderDetailModel.aggregate([
+      // A) Convert maHoaDon:string → ObjectId
       {
-        $project: {
-          _id: 0,
-          thang: { $literal: month },
-          nam: { $literal: year },
-          tongDoanhThu: 1
+        $addFields: {
+          orderObjId: { $toObjectId: '$maHoaDon' }
+        }
+      },
+      // B) Lookup sang collection 'donhangs' để join chi tiết với đơn hàng gốc
+      {
+        $lookup: {
+          from: 'donhangs',          // --- CHẮC CHẮN PHẢI ĐÚNG TÊN collection ---
+          localField: 'orderObjId',
+          foreignField: '_id',
+          as: 'donHang'
+        }
+      },
+      // C) Unwind mảng donHang để mỗi document chỉ còn 1 object 'donHang'
+      {
+        $unwind: {
+          path: '$donHang',
+          preserveNullAndEmptyArrays: false
+        }
+      },
+      // D) Match: chỉ giữ detail của các đơn đã thanh toán và order.ngayTao trong tháng
+      {
+        $match: {
+          'donHang.thanhToan.trangThaiThanhToan': 'daThanhToan',
+          'donHang.ngayTao': { $gte: startDate, $lt: endDate }
+        }
+      },
+      // E) Group để cộng tổng soLuong (tính số sản phẩm bán được)
+      {
+        $group: {
+          _id: null,
+          tongSanPhamBanDuoc: { $sum: '$soLuong' }
         }
       }
     ]);
+    const tongSanPhamBanDuoc = sanPhamAgg[0]?.tongSanPhamBanDuoc || 0;
 
-    return result[0] || { thang: month, nam: year, tongDoanhThu: 0 };
+    return {
+      thang: month,
+      nam: year,
+      tongDoanhThu,
+      tongSanPhamBanDuoc
+    };
   }
 
-
-  //Thống kê doanh thu theo ngày
+  // --------------------------------------------------------
+  // 2) Thống kê doanh thu & số lượng bán theo NGÀY
+  // --------------------------------------------------------
   async getRevenueByDay(day: number, month: number, year: number) {
+    // 2.1) Xác định ranh giới UTC của ngày
     const startDate = new Date(Date.UTC(year, month - 1, day));
-    const endDate = new Date(Date.UTC(year, month - 1, day + 1));
+    const endDate   = new Date(Date.UTC(year, month - 1, day + 1));
 
-    const result = await orderModel.aggregate([
+    // 2.2) Tính tổng doanh thu từ 'donhangs'
+    const doanhThuAgg = await orderModel.aggregate([
       {
         $match: {
           ngayTao: { $gte: startDate, $lt: endDate },
@@ -489,27 +566,65 @@ class StatisticIngredientService{
           _id: null,
           tongDoanhThu: { $sum: '$tongTien' }
         }
+      }
+    ]);
+    const tongDoanhThu = doanhThuAgg[0]?.tongDoanhThu || 0;
+
+    // 2.3) Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
+    const sanPhamAgg = await orderDetailModel.aggregate([
+      {
+        $addFields: {
+          orderObjId: { $toObjectId: '$maHoaDon' }
+        }
       },
       {
-        $project: {
-          _id: 0,
-          ngay: { $literal: day },
-          thang: { $literal: month },
-          nam: { $literal: year },
-          tongDoanhThu: 1
+        $lookup: {
+          from: 'donhangs',
+          localField: 'orderObjId',
+          foreignField: '_id',
+          as: 'donHang'
+        }
+      },
+      {
+        $unwind: {
+          path: '$donHang',
+          preserveNullAndEmptyArrays: false
+        }
+      },
+      {
+        $match: {
+          'donHang.thanhToan.trangThaiThanhToan': 'daThanhToan',
+          'donHang.ngayTao': { $gte: startDate, $lt: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          tongSanPhamBanDuoc: { $sum: '$soLuong' }
         }
       }
     ]);
+    const tongSanPhamBanDuoc = sanPhamAgg[0]?.tongSanPhamBanDuoc || 0;
 
-    return result[0] || { ngay: day, thang: month, nam: year, tongDoanhThu: 0 };
+    return {
+      ngay: day,
+      thang: month,
+      nam: year,
+      tongDoanhThu,
+      tongSanPhamBanDuoc
+    };
   }
 
-  //Thống kê doanh thu theo năm
-  async getRevenueByYear(nam: number) {
-    const startDate = new Date(Date.UTC(nam, 0, 1));
-    const endDate = new Date(Date.UTC(nam + 1, 0, 1));
+  // --------------------------------------------------------
+  // 3) Thống kê doanh thu & số lượng bán theo NĂM
+  // --------------------------------------------------------
+  async getRevenueByYear(year: number) {
+    // 3.1) Xác định ranh giới đầu-cuối UTC của năm
+    const startDate = new Date(Date.UTC(year, 0, 1));
+    const endDate   = new Date(Date.UTC(year + 1, 0, 1));
 
-    const result = await orderModel.aggregate([
+    // 3.2) Tính tổng doanh thu từ 'donhangs'
+    const doanhThuAgg = await orderModel.aggregate([
       {
         $match: {
           ngayTao: { $gte: startDate, $lt: endDate },
@@ -521,17 +636,51 @@ class StatisticIngredientService{
           _id: null,
           tongDoanhThu: { $sum: '$tongTien' }
         }
+      }
+    ]);
+    const tongDoanhThu = doanhThuAgg[0]?.tongDoanhThu || 0;
+
+    // 3.3) Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
+    const sanPhamAgg = await orderDetailModel.aggregate([
+      {
+        $addFields: {
+          orderObjId: { $toObjectId: '$maHoaDon' }
+        }
       },
       {
-        $project: {
-          _id: 0,
-          nam: { $literal: nam },
-          tongDoanhThu: 1
+        $lookup: {
+          from: 'donhangs',
+          localField: 'orderObjId',
+          foreignField: '_id',
+          as: 'donHang'
+        }
+      },
+      {
+        $unwind: {
+          path: '$donHang',
+          preserveNullAndEmptyArrays: false
+        }
+      },
+      {
+        $match: {
+          'donHang.thanhToan.trangThaiThanhToan': 'daThanhToan',
+          'donHang.ngayTao': { $gte: startDate, $lt: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          tongSanPhamBanDuoc: { $sum: '$soLuong' }
         }
       }
     ]);
+    const tongSanPhamBanDuoc = sanPhamAgg[0]?.tongSanPhamBanDuoc || 0;
 
-    return result[0] || { nam, tongDoanhThu: 0 };
+    return {
+      nam: year,
+      tongDoanhThu,
+      tongSanPhamBanDuoc
+    };
   }
 }
 

@@ -1,6 +1,8 @@
 import promotionModel, { PromotionInput } from '../models/promotionModel';
+import notificationService from './notificationService';
+import userModel from '../models/userModel';
 import { BadRequestError } from '../utils/errors';
-import { LoaiKhuyenMai } from '../types/common';
+import { LoaiThongBao, TrangThaiPhanHoi, LoaiKhuyenMai } from '../types/common';
 
 class PromotionService {
   // Tạo khuyến mãi
@@ -18,6 +20,14 @@ class PromotionService {
     });
 
     await promotion.save();
+
+    await notificationService.createForAllUsers({
+      tieuDe: 'Khuyến mãi mới!',
+      noiDung: `Khuyến mãi ${data.tenKhuyenMai} đã bắt đầu, đừng bỏ lỡ!`,
+      loaiThongBao: LoaiThongBao.KHUYEN_MAI_MOI,
+      lienKet: '/khuyen-mai/' + data.maKhuyenMai,
+    });
+    
     return promotion;
   }
 

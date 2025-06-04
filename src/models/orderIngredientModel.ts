@@ -4,18 +4,17 @@ import { TrangThaiDonDatNguyenLieu } from '../types/common';
 export interface IOrderIngredient extends Document {
   maNhaCungCap: string;
   ngayDat: Date;
-  nguoiDat: string;
+  nguoiDat: {
+    ma: string;
+    ten: string;
+  };
   ngayNhap?: Date;
-  nguoiNhap?: string;
+  nguoiNhap?: {
+    ma: string;
+    ten: string;
+  };
   thoiGianCanGiao: Date;
-  nguyenLieu: [
-    {
-      maNguyenLieu: string
-      soLuong: number,
-      donGia: number,
-      thanhTien: number,
-    },
-  ],
+  nguyenLieu: string[];
   trangThai: TrangThaiDonDatNguyenLieu;
   tongTien: number;
   ghiChu?: string;
@@ -28,11 +27,7 @@ export interface OrderIngredientInput {
   nguoiDat: string;
   ngayDat: Date;
   thoiGianCanGiao: Date;
-  nguyenLieu: {
-    maNguyenLieu: string;
-    soLuong: number;
-    donGia: number;
-  }[];
+  nguyenLieu: string[];
   ngayNhap?: Date;
   nguoiNhap?: string;
   trangThai: TrangThaiDonDatNguyenLieu
@@ -44,12 +39,7 @@ const orderIngredientSchema = new Schema<IOrderIngredient>({
   maNhaCungCap: { type: String, ref: 'NhaCungCap' ,required: true },
   ngayDat: { type: Date, default: Date.now },
   thoiGianCanGiao: { type: Date, default: Date.now },
-  nguyenLieu: [{
-    maNguyenLieu: { type: String, required: true },
-    soLuong: { type: Number, required: true },
-    donGia: { type: Number, required: false },
-    thanhTien: { type: Number, required: false },
-  }],
+  nguyenLieu: [{ type: Schema.Types.ObjectId, ref: 'NguyenLieu', required: true }],
   tongTien: { type: Number, required: false },
   ngayNhap: { type: Date, default: Date.now },
   trangThai: {
@@ -58,8 +48,14 @@ const orderIngredientSchema = new Schema<IOrderIngredient>({
     required: true,
   },
   ghiChu: { type: String },
-  nguoiDat: { type: String, required: true },
-  nguoiNhap: { type: String},
+  nguoiDat: {
+    ma: { type: String, required: true },
+    ten: { type: String, required: true }
+  },
+  nguoiNhap: {
+    ma: { type: String },
+    ten: { type: String }
+  },
   ngayTao: { type: Date, default: Date.now },
   ngayCapNhat: { type: Date, default: Date.now },
 });

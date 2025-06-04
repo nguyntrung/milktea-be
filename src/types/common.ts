@@ -64,6 +64,7 @@ export enum PhuongThucThanhToan {
 export enum TrangThaiDonDatNguyenLieu {
   CHO_DUYET = 'choDuyet',        // Đơn đặt mới, đang chờ duyệt
   DA_DUYET = 'daDuyet',          // Đơn đặt đã được duyệt
+  CHUA_NHAP = 'chuaNhap',          // Đơn đặt chưa nhập
   CHO_HANG_VE = 'choHangVe',     // Đã đặt hàng, đang chờ hàng về
   DA_NHAN_HANG = 'daNhanHang',   // Đã nhận hàng đầy đủ
   HOAN_THANH = 'hoanThanh',       // Đơn hàng đã hoàn thành
