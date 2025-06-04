@@ -1,4 +1,10 @@
+import mongoose from 'mongoose';
 import orderIngredientModel, { OrderIngredientInput } from '../models/orderIngredientModel';
+import ingredientModel from '../models/ingredientModel';
+import orderIngredientDetailModel from '../models/orderIngredientDetailModel';
+import orderIngredientDetailService from './orderIngredientDetailService';
+import { TrangThaiDonDatNguyenLieu } from '../types/common';
+import userModel from '../models/userModel';
 import { BadRequestError } from '../utils/errors';
 
 class orderIngredientService {
@@ -8,44 +14,63 @@ class orderIngredientService {
       thoiGianCanGiao,
       nguyenLieu,
       trangThai,
-      nguoiNhap,
-      ngayNhap,
       ghiChu,
       nguoiDat
     } = data;
 
-    // Xử lý nguyên liệu: tính donGia & thanhTien nếu có
-    const processedNguyenLieu = nguyenLieu.map(item => {
-      const soLuong = item.soLuong ?? 0;
-      const donGia = item.donGia ?? 0;
-      const thanhTien = soLuong * donGia;
+    const nhaCungCapId = new mongoose.Types.ObjectId(maNhaCungCap);
+    const nguoiDatId = new mongoose.Types.ObjectId(nguoiDat);
+    const nguyenLieuIds = nguyenLieu.map(id => new mongoose.Types.ObjectId(id));
 
-      return {
-        ...item,
-        donGia,
-        thanhTien,
-      };
-    });
-
-    // Tính tổng tiền từ tất cả nguyên liệu
-    const tongTien = processedNguyenLieu.reduce((sum, item) => sum + (item.thanhTien || 0), 0);
+    const user = await userModel.findById(nguoiDatId);
+    if (!user) throw new BadRequestError('Người đặt không tồn tại');
 
     const order = await orderIngredientModel.create({
-      maNhaCungCap,
+      maNhaCungCap: nhaCungCapId,
       ngayDat: new Date(),
       thoiGianCanGiao,
-      nguyenLieu: processedNguyenLieu,
+      nguyenLieu: nguyenLieuIds,
       trangThai,
       ghiChu,
-      nguoiDat,
+      nguoiDat: { ma: user.id, ten: user.ten },
       nguoiNhap: null,
-      ngayNhap,
-      tongTien,
+      ngayNhap: null,
+      tongTien: 0,
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });
 
-    return order;
+    const ingredients = await ingredientModel.find({ _id: { $in: nguyenLieuIds } });
+
+    for (const ing of ingredients) {
+      await orderIngredientDetailModel.create({
+        maDonDat: order._id,
+        maNguyenLieu: ing._id,
+        tenNguyenLieu: ing.ten,
+        donViTinh: ing.donViTinh,
+        soLuong: 0,
+        donGia: 0,
+        thanhTien: 0,
+      });
+    }
+
+    await orderIngredientDetailService.calculateAndUpdateTongTien(order.id);
+
+    const chiTiet = await orderIngredientDetailModel.find({ maDonDat: order._id });
+
+    const nguyenLieuDetail = chiTiet.map(ct => ({
+      maNguyenLieu: ct.maNguyenLieu.toString(),
+      ten: ct.tenNguyenLieu,
+      donViTinh: ct.donViTinh,
+      soLuong: ct.soLuong,
+      donGia: ct.donGia,
+      thanhTien: ct.thanhTien,
+    }));
+
+    return {
+      ...order.toObject(),
+      nguyenLieu: nguyenLieuDetail,
+    };
   }
 
   async getAll() {
@@ -54,58 +79,61 @@ class orderIngredientService {
 
   async getById(id: string) {
     const order = await orderIngredientModel.findById(id);
-    if (!order) {
-      throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
-    }
+    if (!order) throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
     return order;
   }
 
   async update(id: string, data: any) {
     const order = await orderIngredientModel.findById(id);
-    if (!order) {
-      throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
+    if (!order) throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
+
+    const isNhap = data.trangThai === TrangThaiDonDatNguyenLieu.DA_NHAN_HANG;
+    const isHuy = data.trangThai === TrangThaiDonDatNguyenLieu.HUY_DON;
+
+    let nguoiNhapObj = null;
+    if (isNhap && data.nguoiNhap) {
+      const userNhap = await userModel.findById(data.nguoiNhap);
+      if (!userNhap) throw new BadRequestError('Người nhập không tồn tại');
+      nguoiNhapObj = { ma: userNhap.id, ten: userNhap.ten };
     }
-
-    let nguyenLieu = order.nguyenLieu;
-
-    // Nếu có cập nhật nguyên liệu => xử lý lại donGia & thanhTien
-    if (data.nguyenLieu && Array.isArray(data.nguyenLieu)) {
-      nguyenLieu = data.nguyenLieu.map((item: any) => {
-        const donGia = item.donGia ?? 0;
-        const soLuong = item.soLuong ?? 0;
-        const thanhTien = donGia * soLuong;
-        return {
-          ...item,
-          donGia,
-          thanhTien,
-        };
-      });
-    }
-
-    // Tính tổng tiền mới
-    const tongTien = nguyenLieu.reduce((sum, item) => sum + (item.thanhTien || 0), 0);
 
     const updatedOrder = await orderIngredientModel.findByIdAndUpdate(
       id,
       {
         ...data,
-        nguyenLieu,
-        tongTien,
-        ngayNhap: data.ngayNhap || order.ngayNhap,
-        nguoiNhap: data.nguoiNhap || order.nguoiNhap,
+        nguoiNhap: nguoiNhapObj,
+        ngayNhap: isNhap ? new Date() : null,
         ngayCapNhat: new Date(),
+        ...(isHuy && {
+          nguoiNhap: null,
+          ngayNhap: null,
+        }),
       },
       { new: true }
     );
 
-    return updatedOrder;
+    await orderIngredientDetailService.calculateAndUpdateTongTien(updatedOrder!.id);
+
+    const chiTiet = await orderIngredientDetailModel.find({ maDonDat: id });
+
+    const nguyenLieuDetail = chiTiet.map(ct => ({
+      maNguyenLieu: ct.maNguyenLieu.toString(),
+      ten: ct.tenNguyenLieu,
+      donViTinh: ct.donViTinh,
+      soLuong: ct.soLuong,
+      donGia: ct.donGia,
+      thanhTien: ct.thanhTien,
+    }));
+
+    return {
+      ...updatedOrder!.toObject(),
+      nguyenLieu: nguyenLieuDetail,
+    };
   }
 
   async delete(id: string) {
     const order = await orderIngredientModel.findById(id);
-    if (!order) {
-      throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
-    }
+    if (!order) throw new BadRequestError('Đơn đặt nguyên liệu không tồn tại');
 
     await orderIngredientModel.findByIdAndDelete(id);
     return { message: 'Xóa đơn đặt nguyên liệu thành công' };

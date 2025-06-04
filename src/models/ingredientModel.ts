@@ -3,7 +3,6 @@ import { DonViTinh } from '../types/common';
 
 // Define types
 export interface IIngredient extends Document {
-  _id: string;
   ten: string;
   donViTinh: DonViTinh;
   maNhaCungCap: string | string[];
@@ -17,7 +16,7 @@ export interface IngredientInput {
   ten: string;
   donViTinh: DonViTinh;
   maNhaCungCap: string | string[];
-  nguyenLieuHaoHut: boolean;
+  nguyenLieuHaoHut?: boolean;
 }
 
 // Define schema

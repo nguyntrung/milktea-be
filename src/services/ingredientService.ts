@@ -4,7 +4,7 @@ import { BadRequestError } from '../utils/errors';
 
 class IngredientService {
   async create(data: IngredientInput) {
-    const { ten, donViTinh, maNhaCungCap } = data;
+    const { ten, donViTinh, maNhaCungCap, nguyenLieuHaoHut } = data;
 
     // Check if ingredient exists
     const existingIngredient = await ingredientModel.findOne({ ten });
@@ -31,6 +31,7 @@ class IngredientService {
       ten,
       donViTinh,
       maNhaCungCap: suppliers,
+      nguyenLieuHaoHut: nguyenLieuHaoHut ?? false,
       hoatDong: true,
     });
 
