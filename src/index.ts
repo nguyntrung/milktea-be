@@ -20,6 +20,7 @@ import reviewRoutes from './routes/reviewRoutes';
 import feedRoutes from './routes/feedbackRoutes';
 import storeRoutes from './routes/storeRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import bannerRoutes from './routes/bannerRoutes';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/feedbacks', feedRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/banners', bannerRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {

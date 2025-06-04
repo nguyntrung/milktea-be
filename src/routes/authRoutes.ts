@@ -1,12 +1,13 @@
 import express from 'express';
 import authController from '../controllers/authController';
-import { protect } from '../middleware/authMiddleware';
+import { adminOnly, protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/:id', protect, authController.getById);
+router.get("/", authController.getAll)
 
 // Example protected route
 router.get('/profile', protect, (req: any, res) => {

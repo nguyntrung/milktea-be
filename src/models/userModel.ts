@@ -45,9 +45,9 @@ export interface LoginInput {
 const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
   matKhau: { type: String, required: true },
-  ten: { type: String, required: true },
-  ngaySinh: { type: Date, required: true },
-  gioiTinh: { type: String, enum: Object.values(GioiTinh), required: true },
+  ten: { type: String },
+  ngaySinh: { type: Date },
+  gioiTinh: { type: String, enum: Object.values(GioiTinh) },
   soDienThoai: { type: String },
   diemTichLuy: { type: Number, default: 0 },
   lichSuDiem: [
