@@ -1,5 +1,8 @@
-import promotionModel, { IPromotion, PromotionInput } from '../models/promotionModel';
+import promotionModel, { PromotionInput } from '../models/promotionModel';
+import notificationService from './notificationService';
+import userModel from '../models/userModel';
 import { BadRequestError } from '../utils/errors';
+import { LoaiThongBao, TrangThaiPhanHoi, LoaiKhuyenMai } from '../types/common';
 
 class PromotionService {
   // Tạo khuyến mãi
@@ -17,6 +20,14 @@ class PromotionService {
     });
 
     await promotion.save();
+
+    await notificationService.createForAllUsers({
+      tieuDe: 'Khuyến mãi mới!',
+      noiDung: `Khuyến mãi ${data.tenKhuyenMai} đã bắt đầu, đừng bỏ lỡ!`,
+      loaiThongBao: LoaiThongBao.KHUYEN_MAI_MOI,
+      lienKet: '/khuyen-mai/' + data.maKhuyenMai,
+    });
+    
     return promotion;
   }
 
@@ -58,6 +69,35 @@ class PromotionService {
 
     await promotionModel.findByIdAndDelete(id);
     return { message: 'Xóa khuyến mãi thành công' };
+  }
+  
+  isValidForOrder(order: any, promo: any): boolean {
+    const now = new Date();
+    if (promo.thoiGianApDung.batDau > now || promo.thoiGianApDung.ketThuc < now) return false;
+
+    if (promo.doiTuongKhuyenMai !== 'hoaDon') return false;
+
+    if (order.tongTienHang < promo.hoaDonApDung.giaTriToiThieu) return false;
+
+    if (promo.soLuong.daSuDung >= promo.soLuong.tongSoLuong) return false;
+
+    return true;
+  }
+
+  async calculateDiscounts(khuyenMais: { loaiKhuyenMai: LoaiKhuyenMai; giaTri: number }[], tongTien: number) {
+    let tongGiam = 0;
+
+    for (const km of khuyenMais) {
+      let giam = 0;
+      if (km.loaiKhuyenMai === LoaiKhuyenMai.GIAM_PHAN_TRAM) {
+        giam = (tongTien * km.giaTri) / 100;
+      } else if (km.loaiKhuyenMai === LoaiKhuyenMai.GIAM_TIEN) {
+        giam = km.giaTri;
+      }
+      tongGiam += giam;
+    }
+
+    return Math.min(tongGiam, tongTien);
   }
 }
 
