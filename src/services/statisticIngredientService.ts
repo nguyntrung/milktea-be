@@ -248,7 +248,7 @@ class StatisticIngredientService{
       if (stat.soLuongTon < usedQty) {
         throw new BadRequestError(`Không đủ nguyên liệu: ${maNguyenLieu}`);
       }
-      
+
       // Kiểm tra tồn kho thực tế
       const soLuongTonSauTru = stat.soLuongTon - usedQty;
       if (soLuongTonSauTru < 0) {
@@ -341,11 +341,69 @@ class StatisticIngredientService{
     return { message: 'Cập nhật hao hụt thành công' };
   }
 
-  //Thống kê nguyên liệu theo Tháng
+  //Thống kê nguyên liệu theo ngày.
+  async getStatisticByDay(ngay: number, thang: number, nam: number) {
+    const startDate = new Date(Date.UTC(nam, thang - 1, ngay));
+    const endDate = new Date(Date.UTC(nam, thang - 1, ngay + 1));
+
+    const result = await statisticIngredientModel.aggregate([
+      { $match: { ngay: { $gte: startDate, $lt: endDate } } },
+      {
+        $group: {
+          _id: {
+            maNguyenLieu: '$maNguyenLieu',
+            ngay: {
+              $dateToString: { format: '%Y-%m-%d', date: '$ngay' },
+            },
+          },
+          donViTinh: { $first: '$donViTinh' },
+          tenNguyenLieu: { $first: '$tenNguyenLieu' },
+          tongSoLuongNhap: { $sum: '$soLuongNhap' },
+          tongSoLuongBan: { $sum: '$soLuongBan' },
+          tongSoLuongHaoHut: { $sum: '$soLuongHaoHut' },
+          tongSoLuongTon: { $sum: '$soLuongTon' },
+        },
+      },
+      {
+        $addFields: {
+          maNguyenLieuObjId: { $toObjectId: '$_id.maNguyenLieu' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'nguyenlieus',
+          localField: 'maNguyenLieuObjId',
+          foreignField: '_id',
+          as: 'nguyenLieus',
+        },
+      },
+      { $unwind: { path: '$nguyenLieus', preserveNullAndEmptyArrays: true } },
+      { $sort: { '_id.ngay': 1 } },
+      {
+        $project: {
+          ngay: '$_id.ngay',
+          maNguyenLieu: '$_id.maNguyenLieu',
+          tenNguyenLieu: '$nguyenLieus.ten',
+          donViTinh: 1,
+          tongSoLuongNhap: 1,
+          tongSoLuongBan: 1,
+          tongSoLuongHaoHut: 1,
+          tongSoLuongTon: 1,
+          ngayTK: ngay,
+          thangTK: thang,
+          namTK: nam,
+          _id: 0
+        },
+      },
+    ]);
+
+    return result;
+  }
+
+  //Thống kê nguyên liệu theo tháng
   async getStatisticByMonth(thang: number, nam: number) {
     const startDate = new Date(Date.UTC(nam, thang - 1, 1));
     const endDate = new Date(Date.UTC(nam, thang, 1)); 
-
     const monthString = `${nam}-${String(thang).padStart(2, '0')}`;
 
     const result = await statisticIngredientModel.aggregate([
@@ -364,7 +422,6 @@ class StatisticIngredientService{
         $group: {
           _id: '$maNguyenLieu',
           donViTinh: { $first: '$donViTinh' },
-          soLuongBanDau: { $first: '$soLuongBanDau' },
           tongSoLuongNhap: { $sum: '$soLuongNhap' },
           tongSoLuongBan: { $sum: '$soLuongBan' },
           tongSoLuongHaoHut: { $sum: '$soLuongHaoHut' },
@@ -396,81 +453,14 @@ class StatisticIngredientService{
           maNguyenLieu: '$_id',
           tenNguyenLieu: 1,
           donViTinh: 1,
-          soLuongBanDau: 1,
           tongSoLuongNhap: 1,
           tongSoLuongBan: 1,
           tongSoLuongHaoHut: 1,
-          soLuongTon: 1
+          soLuongTon: 1,
+          thang: { $literal: thang },
+          nam: { $literal: nam }
         }
       }
-    ]);
-    return result;
-  }
-
-  //Thống kê nguyên liệu theo ngày
-  async getStatisticByDay(ngay: number, thang: number, nam: number) {
-      const startDate = new Date(Date.UTC(nam, thang - 1, ngay));
-      const endDate = new Date(Date.UTC(nam, thang - 1, ngay + 1));
-
-    const result = await statisticIngredientModel.aggregate([
-      {
-        $match: {
-          ngay: { $gte: startDate, $lt: endDate },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            maNguyenLieu: '$maNguyenLieu',
-            ngay: {
-              $dateToString: { format: '%Y-%m-%d', date: '$ngay' },
-            },
-          },
-          donViTinh: { $first: '$donViTinh' },
-          tenNguyenLieu: { $first: '$tenNguyenLieu' },
-          tongSoLuongBanDau: { $sum: '$soLuongBanDau' },
-          tongSoLuongNhap: { $sum: '$soLuongNhap' },
-          tongSoLuongBan: { $sum: '$soLuongBan' },
-          tongSoLuongHaoHut: { $sum: '$soLuongHaoHut' },
-          tongSoLuongTon: { $sum: '$soLuongTon' },
-        },
-      },
-      {
-        $addFields: {
-          maNguyenLieuObjId: { $toObjectId: '$_id.maNguyenLieu' }
-        }
-      },
-      {
-        $lookup: {
-          from: 'nguyenlieus',
-          localField: 'maNguyenLieuObjId',
-          foreignField: '_id',
-          as: 'nguyenLieus',
-        },
-      },
-      {
-        $unwind: {
-          path: '$nguyenLieus',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $sort: { '_id.ngay': 1 },
-      },
-      {
-        $project: {
-          ngay: '$_id.ngay',
-          maNguyenLieu: '$_id.maNguyenLieu',
-          tenNguyenLieu: '$nguyenLieus.ten',
-          donViTinh: 1,
-          tongSoLuongBanDau: 1,
-          tongSoLuongNhap: 1,
-          tongSoLuongBan: 1,
-          tongSoLuongHaoHut: 1,
-          tongSoLuongTon: 1,
-          _id: 0,
-        },
-      },
     ]);
 
     return result;
@@ -486,7 +476,6 @@ class StatisticIngredientService{
       {
         $group: {
           _id: '$maNguyenLieu',
-          tongSoLuongBanDau: { $sum: '$soLuongBanDau' },
           tongSoLuongNhap: { $sum: '$soLuongNhap' },
           tongSoLuongBan: { $sum: '$soLuongBan' },
           tongSoLuongHaoHut: { $sum: '$soLuongHaoHut' },
@@ -514,11 +503,11 @@ class StatisticIngredientService{
           maNguyenLieu: '$_id',
           tenNguyenLieu: '$nguyenLieus.ten',
           donViTinh: 1,
-          tongSoLuongBanDau: 1,
           tongSoLuongNhap: 1,
           tongSoLuongBan: 1,
           tongSoLuongHaoHut: 1,
-          tongSoLuongTon: 1
+          tongSoLuongTon: 1,
+          nam: { $literal: nam }
         }
       }
     ]);
@@ -529,7 +518,7 @@ class StatisticIngredientService{
   // 1) Thống kê doanh thu & số lượng bán theo THÁNG
   // --------------------------------------------------------
   async getRevenueByMonth(month: number, year: number) {
-    // 1.1) Xác định ranh giới ngày tháng (UTC)
+    //Xác định ranh giới ngày tháng (UTC)
     const startDate = new Date(Date.UTC(year, month - 1, 1));
     const endDate   = new Date(Date.UTC(year, month, 1));
 
@@ -550,7 +539,7 @@ class StatisticIngredientService{
     ]);
     const tongDoanhThu = doanhThuAgg[0]?.tongDoanhThu || 0;
 
-    // 1.3) Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
+    //Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
     const sanPhamAgg = await orderDetailModel.aggregate([
       // A) Convert maHoaDon:string → ObjectId
       {
@@ -558,30 +547,30 @@ class StatisticIngredientService{
           orderObjId: { $toObjectId: '$maHoaDon' }
         }
       },
-      // B) Lookup sang collection 'donhangs' để join chi tiết với đơn hàng gốc
+      //Lookup sang collection 'donhangs' để join chi tiết với đơn hàng gốc
       {
         $lookup: {
-          from: 'donhangs',          // --- CHẮC CHẮN PHẢI ĐÚNG TÊN collection ---
+          from: 'donhangs',
           localField: 'orderObjId',
           foreignField: '_id',
           as: 'donHang'
         }
       },
-      // C) Unwind mảng donHang để mỗi document chỉ còn 1 object 'donHang'
+      //Unwind mảng donHang để mỗi document chỉ còn 1 object 'donHang'
       {
         $unwind: {
           path: '$donHang',
           preserveNullAndEmptyArrays: false
         }
       },
-      // D) Match: chỉ giữ detail của các đơn đã thanh toán và order.ngayTao trong tháng
+      //Match: chỉ giữ detail của các đơn đã thanh toán và order.ngayTao trong tháng
       {
         $match: {
           'donHang.thanhToan.trangThaiThanhToan': 'daThanhToan',
           'donHang.ngayTao': { $gte: startDate, $lt: endDate }
         }
       },
-      // E) Group để cộng tổng soLuong (tính số sản phẩm bán được)
+      //Group để cộng tổng soLuong (tính số sản phẩm bán được)
       {
         $group: {
           _id: null,
@@ -600,14 +589,14 @@ class StatisticIngredientService{
   }
 
   // --------------------------------------------------------
-  // 2) Thống kê doanh thu & số lượng bán theo NGÀY
+  //Thống kê doanh thu & số lượng bán theo NGÀY
   // --------------------------------------------------------
   async getRevenueByDay(day: number, month: number, year: number) {
-    // 2.1) Xác định ranh giới UTC của ngày
+    //Xác định ranh giới UTC của ngày
     const startDate = new Date(Date.UTC(year, month - 1, day));
     const endDate   = new Date(Date.UTC(year, month - 1, day + 1));
 
-    // 2.2) Tính tổng doanh thu từ 'donhangs'
+    //Tính tổng doanh thu từ 'donhangs'
     const doanhThuAgg = await orderModel.aggregate([
       {
         $match: {
@@ -624,7 +613,7 @@ class StatisticIngredientService{
     ]);
     const tongDoanhThu = doanhThuAgg[0]?.tongDoanhThu || 0;
 
-    // 2.3) Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
+    //Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
     const sanPhamAgg = await orderDetailModel.aggregate([
       {
         $addFields: {
@@ -670,14 +659,14 @@ class StatisticIngredientService{
   }
 
   // --------------------------------------------------------
-  // 3) Thống kê doanh thu & số lượng bán theo NĂM
+  //Thống kê doanh thu & số lượng bán theo NĂM
   // --------------------------------------------------------
   async getRevenueByYear(year: number) {
-    // 3.1) Xác định ranh giới đầu-cuối UTC của năm
+    //Xác định ranh giới đầu-cuối UTC của năm
     const startDate = new Date(Date.UTC(year, 0, 1));
     const endDate   = new Date(Date.UTC(year + 1, 0, 1));
 
-    // 3.2) Tính tổng doanh thu từ 'donhangs'
+    //Tính tổng doanh thu từ 'donhangs'
     const doanhThuAgg = await orderModel.aggregate([
       {
         $match: {
@@ -694,7 +683,7 @@ class StatisticIngredientService{
     ]);
     const tongDoanhThu = doanhThuAgg[0]?.tongDoanhThu || 0;
 
-    // 3.3) Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
+    //Tính tổng số sản phẩm bán được từ 'chitiethdonhangs'
     const sanPhamAgg = await orderDetailModel.aggregate([
       {
         $addFields: {
