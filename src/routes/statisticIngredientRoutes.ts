@@ -12,7 +12,6 @@ router.get('/revenue/daily', protect, adminOnly, statisticIngredientController.g
 router.get('/revenue/yearly', protect, adminOnly, statisticIngredientController.getYearlyRevenue);
 router.get('/', protect, adminOnly, statisticIngredientController.getAll);
 router.get('/:id', protect, adminOnly, statisticIngredientController.getById);
-// router.post('/', protect, adminOnly, statisticIngredientController.create);
-// router.put('/', protect, adminOnly, statisticIngredientController.update);
+router.post('/haohut', protect, adminOnly, statisticIngredientController.updateHaoHut);
 
 export default router;
