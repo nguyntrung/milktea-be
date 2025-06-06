@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import statisticIngredientModel, {StatisticIngredientInput} from "../models/statisticIngredientModel";
+import statisticIngredientModel from "../models/statisticIngredientModel";
 import ingredientModel from "../models/ingredientModel";
 import productModel from "../models/productModel";
 import orderModel from "../models/orderModel";
@@ -9,111 +9,83 @@ import { BadRequestError } from "../utils/errors";
 import { TrangThaiDonHang } from '../types/common';
 import {convertToBaseUnit} from "../types/helpper"
 
+interface DailyIngredientStat {
+  maNguyenLieu: string;
+  tenNguyenLieu: string;
+  donViTinh: string;
+  soLuongNhap: number;
+  soLuongBan: number;
+  soLuongHaoHut: number;
+  soLuongTon: number;
+}
+
 class StatisticIngredientService{
   //Hàm tính thời gian
   normalizeDate(dateInput: string | Date) {
     const input = new Date(dateInput);
     return new Date(Date.UTC(input.getFullYear(), input.getMonth(), input.getDate()));
   }
+  
+  async getDailyIngredientStatistic(ngay: Date) {
+    const startDate = this.normalizeDate(ngay);
+    const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
 
-  async createStatistic(input: StatisticIngredientInput) {
-    const { ngay, maNguyenLieu } = input;
-    let soLuongBanDau = input.soLuongBanDau;
+    const ingredients = await ingredientModel.find();
+    const result = [];
 
-    // Nếu không truyền vào soLuongBanDau, lấy từ thống kê hôm trước
-    if (typeof soLuongBanDau !== 'number') {
-      const ngayHomQua = new Date(this.normalizeDate(ngay).getTime() - 24 * 60 * 60 * 1000);
-      const prevStat = await statisticIngredientModel.findOne({ ngay: ngayHomQua, maNguyenLieu });
-      soLuongBanDau = prevStat ? prevStat.soLuongTon : 0;
-    }
+    for (const ing of ingredients) {
+      const maNguyenLieuId = ing.id;
 
-    const dateKey = this.normalizeDate(ngay);
-    const nextDate = new Date(dateKey.getTime() + 24 * 60 * 60 * 1000); // ngày hôm sau UTC
+      // Tổng số lượng nhập
+      const nhapAgg = await orderIngredientDetailModel.aggregate([
+        {
+          $match: {
+            maNguyenLieu: maNguyenLieuId,
+            ngayTao: { $gte: startDate, $lt: endDate }
+          }
+        },
+        {
+          $group: { _id: null, total: { $sum: "$soLuong" } }
+        }
+      ]);
+      const soLuongNhap = nhapAgg[0]?.total || 0;
 
-    //Kiểm tra nguyên liệu
-    const ingredient = await ingredientModel.findById(maNguyenLieu);
-    if (!ingredient) {
-      throw new BadRequestError(`Nguyên liệu không tồn tại: ${maNguyenLieu}`);
-    }
+      // Tổng số lượng bán
+      const orders = await orderModel.find({ ngayTao: { $gte: startDate, $lt: endDate } }).select("_id");
+      const orderDetails = await orderDetailModel.find({ maHoaDon: { $in: orders.map(o => o._id) } });
 
-    //Kiểm tra thống kê đã tồn tại chưa
-    const existing = await statisticIngredientModel.findOne({ ngay: dateKey, maNguyenLieu });
-    if (existing) {
-      throw new BadRequestError(`Đã tồn tại thống kê cho nguyên liệu này vào ngày ${dateKey.toISOString().slice(0, 10)}`);
-    }
+      let soLuongBan = 0;
+      for (const detail of orderDetails) {
+        const product = await productModel.findById(detail.maSanPham);
+        const size = product?.luaChonSize.find(s => s.tenSize === detail.kichCo.tenSize);
+        if (!product || !size) continue;
 
-    //Lấy danh sách đơn hàng trong ngày
-    const orderIds = await orderModel.find({
-      ngayTao: {
-        $gte: dateKey,
-        $lt: nextDate,
-      },
-    }).select('_id');
-
-    const orderIdList = orderIds.map(o => o._id);
-    const orderDetails = await orderDetailModel.find({ maHoaDon: { $in: orderIdList } });
-
-    //Tính tổng số lượng bán
-    let soLuongBan = 0;
-    for (const detail of orderDetails) {
-      const product = await productModel.findById(detail.maSanPham);
-      if (!product) continue;
-
-      const size = product.luaChonSize.find(s => s.tenSize === detail.kichCo.tenSize);
-      if (!size) continue;
-
-      for (const tp of size.thanhPhan) {
-        if (tp.maNguyenLieu.toString() === maNguyenLieu.toString()) {
-          const converted = convertToBaseUnit(tp.soLuong, tp.donViTinh, ingredient.donViTinh);
-          soLuongBan += converted * detail.soLuong;
+        for (const tp of size.thanhPhan) {
+          if (tp.maNguyenLieu.toString() === ing.id) {
+            const converted = convertToBaseUnit(tp.soLuong, tp.donViTinh, ing.donViTinh);
+            soLuongBan += converted * detail.soLuong;
+          }
         }
       }
+
+      // Tổng hao hụt (nếu có)
+      const soLuongHaoHut = 0; // nếu có model hao hụt riêng thì xử lý ở đây
+
+      // Tồn cuối
+      const soLuongTon = soLuongNhap - soLuongBan - soLuongHaoHut;
+
+      result.push({
+        maNguyenLieu: ing._id,
+        tenNguyenLieu: ing.ten,
+        donViTinh: ing.donViTinh,
+        soLuongNhap,
+        soLuongBan,
+        soLuongHaoHut,
+        soLuongTon
+      });
     }
 
-    //Lấy chi tiết nhập nguyên liệu đúng ngày
-    const maNguyenLieuId = new mongoose.Types.ObjectId(maNguyenLieu);
-    const importedDetails = await orderIngredientDetailModel.find({
-      maNguyenLieu: maNguyenLieuId,
-      ngayTao: {
-        $gte: dateKey,
-        $lt: nextDate,
-      },
-    });
-
-    //Tính tổng số lượng nhập
-    let soLuongNhap = 0;
-    for (const detail of importedDetails) {
-      const converted = convertToBaseUnit(detail.soLuong, detail.donViTinh, ingredient.donViTinh);
-      soLuongNhap += converted;
-    }
-
-    //Tính tồn kho
-    let soLuongHaoHut = 0;
-    if (ingredient.nguyenLieuHaoHut && typeof input.soLuongHaoHut === 'number') {
-        soLuongHaoHut = input.soLuongHaoHut;
-      }
-    const soLuongTon = soLuongBanDau + soLuongNhap - soLuongBan - soLuongHaoHut;
-
-    if (soLuongTon < 0) {
-      throw new BadRequestError(`Không đủ nguyên liệu để làm sản phẩm. Số lượng tồn kho sẽ bị âm (${soLuongTon}).`);
-    }
-
-    //Tạo thống kê
-    const newStat = await statisticIngredientModel.create({
-      ngay: dateKey,
-      maNguyenLieu,
-      tenNguyenLieu: ingredient.ten,
-      donViTinh: ingredient.donViTinh,
-      soLuongBanDau,
-      soLuongNhap,
-      soLuongBan,
-      soLuongHaoHut,
-      soLuongTon,
-      ngayTao: new Date(),
-      ngayCapNhat: new Date(),
-    });
-    
-    return newStat;
+    return result;
   }
 
  // Lấy toàn bộ thống kê, sắp xếp mới nhất trước
@@ -218,74 +190,65 @@ class StatisticIngredientService{
   async deductIngredientsByOrder(maHoaDon: string, ngay: Date = new Date()) {
     const dateKey = this.normalizeDate(ngay);
 
-    //Lấy đơn hàng
+    // Lấy đơn hàng
     const order = await orderModel.findById(maHoaDon);
     if (!order) {
       throw new BadRequestError(`Không tìm thấy đơn hàng với ID: ${maHoaDon}`);
     }
 
-    //Lấy trạng thái mới nhất
-    const latestStatus = order.lichSuTrangThai[order.lichSuTrangThai.length - 1]?.trangThaiDonHang;
-
-    const cacTrangThaiChoPhepTruKho: TrangThaiDonHang[] = [
-      TrangThaiDonHang.DANG_CHUAN_BI
-    ];
-
+    // Tính nguyên liệu đã dùng trong đơn hàng
     const ingredientUsageMap = await this.calculateIngredientsUsed(maHoaDon);
 
-    for (const maNguyenLieu in ingredientUsageMap) {
-      // Tính lại tổng số lượng bán của nguyên liệu này trong ngày (toàn bộ đơn hàng)
-      const totalSoLuongBanTrongNgay = await this.calculateSoLuongBanTheoNgay(maNguyenLieu, dateKey);
+    // Lấy thống kê động theo ngày
+    const dailyStats = await this.getDailyIngredientStatistic(dateKey) as DailyIngredientStat[];
 
-      let stat = await statisticIngredientModel.findOne({ ngay: dateKey, maNguyenLieu });
+    for (const maNguyenLieu in ingredientUsageMap) {
+      const usedQty = ingredientUsageMap[maNguyenLieu];
+
+      const stat = dailyStats.find(s => s.maNguyenLieu.toString() === maNguyenLieu) as DailyIngredientStat;
 
       if (!stat) {
-        const ingredient = await ingredientModel.findById(maNguyenLieu);
-        if (!ingredient) {
-          throw new Error(`Nguyên liệu không tồn tại: ${maNguyenLieu}`);
-        }
+        throw new BadRequestError(`Không tìm thấy thống kê trong ngày cho nguyên liệu: ${maNguyenLieu}`);
+      }
 
-        stat = new statisticIngredientModel({
+      // Kiểm tra tồn kho thực tế
+      const soLuongTonSauTru = stat.soLuongTon - usedQty;
+      if (soLuongTonSauTru < 0) {
+        throw new BadRequestError(`Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${soLuongTonSauTru})`);
+      }
+
+      // Cập nhật vào collection thống kê (nếu bạn vẫn muốn lưu thống kê)
+      const existingStat = await statisticIngredientModel.findOne({ ngay: dateKey, maNguyenLieu });
+
+      if (!existingStat) {
+        await statisticIngredientModel.create({
           ngay: dateKey,
           maNguyenLieu,
-          donViTinh: ingredient.donViTinh,
-          soLuongBanDau: 0,
-          soLuongBan: totalSoLuongBanTrongNgay,
-          soLuongNhap: 0,
-          soLuongHaoHut: 0,
-          soLuongTon: 0,
+          tenNguyenLieu: stat.tenNguyenLieu,
+          donViTinh: stat.donViTinh,
+          soLuongNhap: stat.soLuongNhap,
+          soLuongBan: stat.soLuongBan + usedQty,
+          soLuongHaoHut: stat.soLuongHaoHut,
+          soLuongTon: soLuongTonSauTru,
           ngayTao: new Date(),
           ngayCapNhat: new Date(),
         });
       } else {
-        stat.soLuongBan = totalSoLuongBanTrongNgay; // Gán lại thay vì cộng dồn
-        stat.ngayCapNhat = new Date();
-      }
+        existingStat.soLuongBan += usedQty;
+        existingStat.soLuongTon = existingStat.soLuongNhap - existingStat.soLuongBan - existingStat.soLuongHaoHut;
+        existingStat.ngayCapNhat = new Date();
 
-      stat.soLuongTon = stat.soLuongBanDau + stat.soLuongNhap - stat.soLuongBan - stat.soLuongHaoHut;
-      if (stat.soLuongTon < 0) {
-        throw new BadRequestError(`Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${stat.soLuongTon})`);
-      }
+        if (existingStat.soLuongTon < 0) {
+          throw new BadRequestError(`Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${existingStat.soLuongTon})`);
+        }
 
-      await stat.save();
+        await existingStat.save();
+      }
     }
 
     return { message: 'Cập nhật trừ kho nguyên liệu thành công' };
   }
 
-  async updateStatistic(id: string, input: Partial<StatisticIngredientInput>) {
-    const existing = await statisticIngredientModel.findById(id);
-    if (!existing) {
-      throw new BadRequestError('Thống kê nguyên liệu không tồn tại');
-    }
-
-    Object.assign(existing, input, {
-      ngayCapNhat: new Date(),
-    });
-
-    await existing.save();
-    return existing;
-  }
 
   //Thống kê nguyên liệu theo Tháng
   async getStatisticByMonth(thang: number, nam: number) {

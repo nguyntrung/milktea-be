@@ -3,7 +3,7 @@ import statisticIngredientController from '../controllers/statisticIngredientCon
 import { protect,adminOnly } from '../middleware/authMiddleware';
 
 const router = express.Router();
-
+router.get('/statistic', protect, adminOnly, statisticIngredientController.getDynamicDailyStatistic);
 router.get('/month', protect, adminOnly, statisticIngredientController.getMonthlyStatistics);
 router.get('/daily', protect, adminOnly, statisticIngredientController.getDailyStatistics);
 router.get('/yearly', protect, adminOnly, statisticIngredientController.getYearlyStatistics);
@@ -12,7 +12,7 @@ router.get('/revenue/daily', protect, adminOnly, statisticIngredientController.g
 router.get('/revenue/yearly', protect, adminOnly, statisticIngredientController.getYearlyRevenue);
 router.get('/', protect, adminOnly, statisticIngredientController.getAll);
 router.get('/:id', protect, adminOnly, statisticIngredientController.getById);
-router.post('/', protect, adminOnly, statisticIngredientController.create);
-router.put('/', protect, adminOnly, statisticIngredientController.update);
+// router.post('/', protect, adminOnly, statisticIngredientController.create);
+// router.put('/', protect, adminOnly, statisticIngredientController.update);
 
 export default router;
