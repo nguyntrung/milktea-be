@@ -29,12 +29,20 @@ class StatisticIngredientService{
   async getDailyIngredientStatistic(ngay: Date) {
     const startDate = this.normalizeDate(ngay);
     const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+    const prevDate = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
 
     const ingredients = await ingredientModel.find();
     const result = [];
 
     for (const ing of ingredients) {
       const maNguyenLieuId = ing.id;
+
+      // Lấy tồn hôm trước
+      const prev = await statisticIngredientModel.findOne({
+        ngay: prevDate,
+        maNguyenLieu: maNguyenLieuId
+      });
+      const tonHomTruoc = prev?.soLuongTon || 0;
 
       // Tổng số lượng nhập
       const nhapAgg = await orderIngredientDetailModel.aggregate([
@@ -68,11 +76,37 @@ class StatisticIngredientService{
         }
       }
 
-      // Tổng hao hụt (nếu có)
-      const soLuongHaoHut = 0; // nếu có model hao hụt riêng thì xử lý ở đây
+      // Lấy hao hụt (nếu có) từ bản ghi đã có
+      const existingStat = await statisticIngredientModel.findOne({
+        ngay: startDate,
+        maNguyenLieu: maNguyenLieuId
+      });
+      const soLuongHaoHut = existingStat?.soLuongHaoHut || 0;
 
-      // Tồn cuối
-      const soLuongTon = soLuongNhap - soLuongBan - soLuongHaoHut;
+      // Tính tồn cuối
+      const soLuongTon = tonHomTruoc + soLuongNhap - soLuongBan - soLuongHaoHut;
+
+      // Tạo hoặc cập nhật bản ghi thống kê
+      if (!existingStat) {
+        await statisticIngredientModel.create({
+          ngay: startDate,
+          maNguyenLieu: maNguyenLieuId,
+          tenNguyenLieu: ing.ten,
+          donViTinh: ing.donViTinh,
+          soLuongNhap,
+          soLuongBan,
+          soLuongHaoHut,
+          soLuongTon,
+          ngayTao: new Date(),
+          ngayCapNhat: new Date()
+        });
+      } else {
+        existingStat.soLuongNhap = soLuongNhap;
+        existingStat.soLuongBan = soLuongBan;
+        existingStat.soLuongTon = soLuongTon;
+        existingStat.ngayCapNhat = new Date();
+        await existingStat.save();
+      }
 
       result.push({
         maNguyenLieu: ing._id,
@@ -211,6 +245,10 @@ class StatisticIngredientService{
         throw new BadRequestError(`Không tìm thấy thống kê trong ngày cho nguyên liệu: ${maNguyenLieu}`);
       }
 
+      if (stat.soLuongTon < usedQty) {
+        throw new BadRequestError(`Không đủ nguyên liệu: ${maNguyenLieu}`);
+      }
+      
       // Kiểm tra tồn kho thực tế
       const soLuongTonSauTru = stat.soLuongTon - usedQty;
       if (soLuongTonSauTru < 0) {
@@ -249,6 +287,59 @@ class StatisticIngredientService{
     return { message: 'Cập nhật trừ kho nguyên liệu thành công' };
   }
 
+  // Cập nhật hao hụt
+  async updateHaoHut(
+    ngay: Date,
+    haoHutList: { maNguyenLieu: string; soLuongHaoHut: number }[]
+  ) {
+    const dateKey = this.normalizeDate(ngay);
+    const updates = [];
+
+    for (const item of haoHutList) {
+      const stat = await statisticIngredientModel.findOne({
+        ngay: dateKey,
+        maNguyenLieu: item.maNguyenLieu,
+      });
+
+      if (!stat) {
+        throw new BadRequestError(
+          `Không tìm thấy thống kê cho nguyên liệu: ${item.maNguyenLieu}`
+        );
+      }
+
+      const nguyenLieu = await ingredientModel.findById(item.maNguyenLieu);
+      if (!nguyenLieu) {
+        throw new BadRequestError(`Không tìm thấy nguyên liệu: ${item.maNguyenLieu}`);
+      }
+
+      let haoHutChuyenDoi: number;
+
+      const dv = nguyenLieu.donViTinh.toLowerCase();
+      // Nếu là đơn vị khối lượng/lít thì mới chuyển đổi từ gram/ml
+      if (['kg', 'lít'].includes(dv)) {
+        const fromUnit = dv === 'kg' ? 'gram' : 'ml';
+        haoHutChuyenDoi = convertToBaseUnit(item.soLuongHaoHut, fromUnit, dv);
+      } else {
+        // Các đơn vị không chuyển đổi, giữ nguyên số nguyên
+        haoHutChuyenDoi = item.soLuongHaoHut;
+      }
+
+      stat.soLuongHaoHut = haoHutChuyenDoi;
+      stat.soLuongTon = stat.soLuongNhap - stat.soLuongBan - stat.soLuongHaoHut;
+      stat.ngayCapNhat = new Date();
+
+      if (stat.soLuongTon < 0) {
+        throw new BadRequestError(
+          `Số lượng tồn kho âm sau hao hụt cho nguyên liệu ${item.maNguyenLieu}`
+        );
+      }
+
+      updates.push(stat.save());
+    }
+
+    await Promise.all(updates);
+    return { message: 'Cập nhật hao hụt thành công' };
+  }
 
   //Thống kê nguyên liệu theo Tháng
   async getStatisticByMonth(thang: number, nam: number) {

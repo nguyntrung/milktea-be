@@ -63,6 +63,37 @@ class StatisticIngredientController {
     }
   }
 
+  async updateHaoHut(req: Request, res: Response): Promise<void> {
+    try {
+      const day = parseInt(req.query.day as string);
+      const month = parseInt(req.query.month as string);
+      const year = parseInt(req.query.year as string);
+      const list = req.body;
+
+      if (isNaN(day) || isNaN(month) || isNaN(year) || !Array.isArray(list)) {
+        res.status(400).json({
+          success: false,
+          message: 'Ngày / tháng / năm hoặc dữ liệu đầu vào không hợp lệ',
+        });
+        return;
+      }
+
+      const date = new Date(Date.UTC(year, month - 1, day));
+      const result = await statisticIngredientService.updateHaoHut(date, list);
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || 'Lỗi máy chủ',
+      });
+    }
+  }
+
+
   //Thống kê nguyên liệu theo Tháng
   async getMonthlyStatistics(req: Request, res: Response): Promise<void> {
     try {
