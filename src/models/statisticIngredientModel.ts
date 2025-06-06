@@ -7,7 +7,6 @@ export interface IstatisticIngredient extends Document {
   maNguyenLieu: string;
   tenNguyenLieu: string;
   donViTinh: DonViTinh;
-  soLuongBanDau: number;
   soLuongBan: number;
   soLuongNhap: number;
   soLuongHaoHut: number;
@@ -15,20 +14,11 @@ export interface IstatisticIngredient extends Document {
   ngayTao: Date;
   ngayCapNhat: Date;
 }
-
-export interface StatisticIngredientInput {
-  ngay: Date;
-  maNguyenLieu: string;
-  soLuongBanDau: number;
-  soLuongHaoHut: number;
-}
-
 const statisticIngredientSchema = new Schema<IstatisticIngredient>({
   ngay: { type: Date, required: true },
   maNguyenLieu: { type: String, ref: 'NguyenLieu', required: true },
   tenNguyenLieu: { type: String, required: true },
   donViTinh: { type: String, enum: Object.values(DonViTinh), required: true },
-  soLuongBanDau: { type: Number, default: 0, required: true },
   soLuongBan: { type: Number, default: 0, required: true },
   soLuongNhap: { type: Number, default: 0, required: true },
   soLuongHaoHut: { type: Number, default: 0, required: true },
