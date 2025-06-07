@@ -9,8 +9,8 @@ router.get('/', ingredientController.getAll);
 router.get('/:id', ingredientController.getById);
 
 // Admin-only routes
-router.post('/', ingredientController.create);
-router.put('/:id', ingredientController.update);
+router.post('/', adminOnly, ingredientController.create);
+router.put('/:id', adminOnly, ingredientController.update);
 router.patch('/:id/deactivate', protect, adminOnly, ingredientController.deactivate);
 
 export default router;

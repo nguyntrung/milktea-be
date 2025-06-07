@@ -9,8 +9,8 @@ router.get('/', supplierController.getAll);
 router.get('/:id', supplierController.getById);
 
 // Admin-only routes
-router.post('/', supplierController.create);
-router.put('/:id', supplierController.update);
+router.post('/', adminOnly, supplierController.create);
+router.put('/:id', adminOnly, supplierController.update);
 router.patch('/:id/deactivate', protect, adminOnly, supplierController.deactivate);
 
 export default router;

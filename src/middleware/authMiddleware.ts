@@ -36,18 +36,24 @@ const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
   }
 };
 
-const adminOnly = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    if (req.user?.vaiTro !== 'admin') {
-      throw new ForbiddenError('Chỉ admin mới có quyền truy cập');
+const authorizeRoles = (...allowedRoles: string[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user || !allowedRoles.includes(req.user.vaiTro)) {
+        throw new ForbiddenError('Bạn không có quyền truy cập tài nguyên này');
+      }
+      next();
+    } catch (error: any) {
+      res.status(error.statusCode || 403).json({
+        success: false,
+        message: error.message,
+      });
     }
-    next();
-  } catch (error: any) {
-    res.status(error.statusCode || 403).json({
-      success: false,
-      message: error.message,
-    });
-  }
+  };
 };
 
-export { protect, adminOnly };
+// Middleware: Chỉ admin
+const adminOnly = authorizeRoles('admin');
+
+// Export tất cả
+export { protect, authorizeRoles, adminOnly };
