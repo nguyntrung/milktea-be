@@ -16,8 +16,6 @@ export interface IOrderIngredientDetail extends Document {
 export interface OrderIngredientDetailInput {
   maDonDat: string;
   maNguyenLieu: string;
-  soLuong: number;
-  donGia: number;
 }
 
 const OrderIngredientDetailSchema: Schema = new Schema<IOrderIngredientDetail>({

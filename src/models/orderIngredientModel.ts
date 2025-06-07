@@ -14,7 +14,10 @@ export interface IOrderIngredient extends Document {
     ten: string;
   };
   thoiGianCanGiao: Date;
-  nguyenLieu: string[];
+  nguyenLieu:{
+    maNguyenLieu: string;
+    soLuong: number;
+  }[];
   trangThai: TrangThaiDonDatNguyenLieu;
   tongTien: number;
   ghiChu?: string;
@@ -27,7 +30,10 @@ export interface OrderIngredientInput {
   nguoiDat: string;
   ngayDat: Date;
   thoiGianCanGiao: Date;
-  nguyenLieu: string[];
+  nguyenLieu:{
+    maNguyenLieu: string;
+    soLuong: number;
+  }[];
   ngayNhap?: Date;
   nguoiNhap?: string;
   trangThai: TrangThaiDonDatNguyenLieu
@@ -39,7 +45,13 @@ const orderIngredientSchema = new Schema<IOrderIngredient>({
   maNhaCungCap: { type: String, ref: 'NhaCungCap' ,required: true },
   ngayDat: { type: Date, default: Date.now },
   thoiGianCanGiao: { type: Date, default: Date.now },
-  nguyenLieu: [{ type: Schema.Types.ObjectId, ref: 'NguyenLieu', required: true }],
+  nguyenLieu: [
+    {
+      maNguyenLieu: { type: String, ref: 'NguyenLieu', required: true },
+      soLuong: { type: Number, required: true },
+      _id: false
+    }
+  ],
   tongTien: { type: Number, required: false },
   ngayNhap: { type: Date, default: Date.now },
   trangThai: {

@@ -1,16 +1,16 @@
 import express from 'express';
 import ingredientController from '../controllers/ingredientController';
-import { protect, adminOnly } from '../middleware/authMiddleware';
+import { protect, authorizeRoles } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 // Public routes
-router.get('/', ingredientController.getAll);
-router.get('/:id', ingredientController.getById);
+router.get('/', protect, authorizeRoles('admin', 'nhan-vien-kho','nhan-vien-ban-hang') ,ingredientController.getAll);
+router.get('/:id', protect, authorizeRoles('admin', 'nhan-vien-kho', 'nhan-vien-ban-hang'),  ingredientController.getById);
 
 // Admin-only routes
-router.post('/', adminOnly, ingredientController.create);
-router.put('/:id', adminOnly, ingredientController.update);
-router.patch('/:id/deactivate', protect, adminOnly, ingredientController.deactivate);
+router.post('/', protect, authorizeRoles('admin'), ingredientController.create);
+router.put('/:id', protect, authorizeRoles('admin'),  ingredientController.update);
+router.patch('/:id/deactivate',protect, authorizeRoles('admin'), ingredientController.deactivate);
 
 export default router;

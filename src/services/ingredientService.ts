@@ -4,7 +4,7 @@ import { BadRequestError } from '../utils/errors';
 
 class IngredientService {
   async create(data: IngredientInput) {
-    const { ten, donViTinh, maNhaCungCap, nguyenLieuHaoHut } = data;
+    const { ten, donViTinh, nhaCungCap, nguyenLieuHaoHut } = data;
 
     // Check if ingredient exists
     const existingIngredient = await ingredientModel.findOne({ ten });
@@ -12,27 +12,27 @@ class IngredientService {
       throw new BadRequestError('Nguyên liệu đã tồn tại');
     }
 
-    // Validate maNhaCungCap
-    const suppliers = Array.isArray(maNhaCungCap) ? maNhaCungCap : [maNhaCungCap];
-    if (suppliers.length === 0) {
+     if (!Array.isArray(nhaCungCap) || nhaCungCap.length === 0) {
       throw new BadRequestError('Phải cung cấp ít nhất một nhà cung cấp');
     }
 
-    const validSuppliers = await supplierModel.find({
-      _id: { $in: suppliers },
-      hoatDong: true,
-    });
-    if (validSuppliers.length !== suppliers.length) {
+    // Validate nhaCungCap
+    const supplierIds = nhaCungCap.map(ncc => ncc.maNhacungCap);
+    const validSuppliers = await supplierModel.find({ _id: { $in: supplierIds }, hoatDong: true });
+
+    if (validSuppliers.length !== supplierIds.length) {
       throw new BadRequestError('Một hoặc nhiều nhà cung cấp không tồn tại hoặc đã bị vô hiệu hóa');
     }
-
+    
     // Create ingredient
     const ingredient = await ingredientModel.create({
       ten,
       donViTinh,
-      maNhaCungCap: suppliers,
+      nhaCungCap,
       nguyenLieuHaoHut: nguyenLieuHaoHut ?? false,
       hoatDong: true,
+      ngayTao: new Date(),
+      ngayCapNhat: new Date()
     });
 
     return ingredient;
@@ -41,14 +41,14 @@ class IngredientService {
   async getAll() {
     return await ingredientModel
       .find({ hoatDong: true })
-      .populate('maNhaCungCap', 'ten')
+      .populate('nhaCungCap', 'ten')
       .sort({ ngayTao: -1 });
   }
 
   async getById(id: string) {
     const ingredient = await ingredientModel
       .findOne({ _id: id, hoatDong: true })
-      .populate('maNhaCungCap', 'ten');
+      .populate('nhaCungCap', 'ten');
     if (!ingredient) {
       throw new BadRequestError('Nguyên liệu không tồn tại hoặc đã bị vô hiệu hóa');
     }
@@ -69,21 +69,13 @@ class IngredientService {
       }
     }
 
-    // Validate maNhaCungCap if provided
-    if (data.maNhaCungCap) {
-      const suppliers = Array.isArray(data.maNhaCungCap) ? data.maNhaCungCap : [data.maNhaCungCap];
-      if (suppliers.length === 0) {
-        throw new BadRequestError('Phải cung cấp ít nhất một nhà cung cấp');
-      }
-
-      const validSuppliers = await supplierModel.find({
-        _id: { $in: suppliers },
-        hoatDong: true,
-      });
-      if (validSuppliers.length !== suppliers.length) {
+    // Validate nhaCungCap if provided
+    if (data.nhaCungCap) {
+      const supplierIds = data.nhaCungCap.map(ncc => ncc.maNhacungCap);
+      const valid = await supplierModel.find({ _id: { $in: supplierIds }, hoatDong: true });
+      if (valid.length !== supplierIds.length) {
         throw new BadRequestError('Một hoặc nhiều nhà cung cấp không tồn tại hoặc đã bị vô hiệu hóa');
       }
-      data.maNhaCungCap = suppliers;
     }
 
     const updatedIngredient = await ingredientModel
@@ -92,7 +84,7 @@ class IngredientService {
         { ...data, ngayCapNhat: new Date() },
         { new: true }
       )
-      .populate('maNhaCungCap', 'ten');
+      .populate('nhaCungCap', 'ten');
 
     return updatedIngredient;
   }
@@ -109,7 +101,7 @@ class IngredientService {
         { hoatDong: false, ngayCapNhat: new Date() },
         { new: true }
       )
-      .populate('maNhaCungCap', 'ten');
+      .populate('nhaCungCap', 'ten');
 
     return { message: 'Vô hiệu hóa nguyên liệu thành công', ingredient: deactivatedIngredient };
   }
