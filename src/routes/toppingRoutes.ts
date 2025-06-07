@@ -9,8 +9,8 @@ router.get('/', toppingController.getAll);
 router.get('/:id', toppingController.getById);
 
 // Admin-only routes
-router.post('/', toppingController.create);
-router.put('/:id', toppingController.update);
+router.post('/', adminOnly, toppingController.create);
+router.put('/:id', adminOnly, toppingController.update);
 router.patch('/:id/deactivate', protect, adminOnly, toppingController.deactivate);
 
 export default router;
