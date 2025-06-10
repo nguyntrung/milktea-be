@@ -1,6 +1,7 @@
 import orderModel, { IOrder, OrderInput } from '../models/orderModel';
 import orderDetailModel from '../models/orderDetailModel';
 import promotionService from './promotionService';
+import promotionModel from '../models/promotionModel';
 import { BadRequestError } from '../utils/errors';
 import { TrangThaiDonHang, LoaiKhuyenMai } from '../types/common';
 import notificationService from './notificationService';
@@ -13,11 +14,24 @@ class OrderService {
       maKhachHang,
       maNhanVien,
       nguoiGiao,
+      phiVanChuyen,
       thongTinNguoiNhan,
       khuyenMai = [],
       thanhToan,
       ghiChu = ''
     } = data;
+
+    const fullPromotionList = await Promise.all(
+      khuyenMai.map(async (km) => {
+        const promo = await promotionModel.findOne({ maKhuyenMai: km.maKhuyenMai });
+        if (!promo) throw new BadRequestError(`Mã khuyến mãi không hợp lệ: ${km.maKhuyenMai}`);
+        return {
+          maKhuyenMai: promo.maKhuyenMai,
+          giaTri: promo.giaTri,
+          loaiKhuyenMai: promo.loaiKhuyenMai,
+        };
+      })
+    );
 
     // Tạo đơn hàng với tổng tiền 0
     const order: IOrder = await orderModel.create({
@@ -25,9 +39,10 @@ class OrderService {
       maNhanVien,
       ngayLap: new Date(),
       tongTienHang: 0,
-      khuyenMai, // Giữ nguyên thông tin khuyến mãi được truyền vào
-      tongTien: 0,
+      khuyenMai : fullPromotionList, 
       nguoiGiao,
+      phiVanChuyen,
+      tongTien: 0,
       thongTinNguoiNhan,
       thanhToan,
       lichSuTrangThai: [{
@@ -48,7 +63,7 @@ class OrderService {
         noiDung: `Khách hàng đã tạo đơn hàng mới.`,
         loaiThongBao: LoaiThongBao.DON_HANG_MOI,
         maNguoiNhan: maNhanVien, // hoặc ID admin xử lý đơn hàng
-        lienKet: `/orders/${order._id}`,
+        lienKet: `/order-details/${order._id}`,
       });
     } catch (error) {
       console.error('Không thể tạo thông báo đơn hàng mới:', error);
@@ -105,7 +120,7 @@ class OrderService {
         noiDung: `Đơn hàng của bạn đã được cập nhật sang trạng thái: ${trangThaiDonHang}`,
         loaiThongBao: LoaiThongBao.TRANG_THAI_DON_HANG,
         maNguoiNhan: order.maKhachHang,
-        lienKet: `/orders/${order._id}`,
+        lienKet: `/order-details/${order._id}`,
       });
     } catch (error) {
       console.error('Không thể tạo thông báo cập nhật trạng thái:', error);
@@ -146,8 +161,9 @@ class OrderService {
     const tongTienHang = details.reduce((sum, d) => sum + d.thanhTien, 0);
 
     const tongKhuyenMai = await promotionService.calculateDiscounts(order.khuyenMai, tongTienHang);
+    
 
-    const tongTien = tongTienHang - tongKhuyenMai;
+    const tongTien = tongTienHang - tongKhuyenMai + order.phiVanChuyen;
 
     order.tongTienHang = tongTienHang;
     order.tongTien = tongTien;
