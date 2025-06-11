@@ -1,6 +1,6 @@
 import express from 'express';
 import toppingController from '../controllers/toppingController';
-import { protect, adminOnly } from '../middleware/authMiddleware';
+import { protect, authorizeRoles } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -9,8 +9,9 @@ router.get('/', toppingController.getAll);
 router.get('/:id', toppingController.getById);
 
 // Admin-only routes
-router.post('/', adminOnly, toppingController.create);
-router.put('/:id', adminOnly, toppingController.update);
-router.patch('/:id/deactivate', protect, adminOnly, toppingController.deactivate);
+router.post('/', protect, authorizeRoles('admin'), toppingController.create);
+router.put('/:id', protect, authorizeRoles('admin'), toppingController.update);
+router.patch('/:id/deactivate', protect, authorizeRoles('admin'), toppingController.deactivate);
+router.delete('/:id', protect, authorizeRoles('admin'), toppingController.delete);
 
 export default router;

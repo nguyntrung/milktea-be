@@ -73,6 +73,19 @@ class SupplierService {
 
     return { message: 'Vô hiệu hóa nhà cung cấp thành công', supplier: deactivatedSupplier };
   }
+
+    async delete(id: string) {
+      const supplier = await supplierModel.findById(id);
+      if (!supplier) {
+        throw new BadRequestError('Nhà cung cấp không tồn tại');
+      }
+
+      // Xoá vĩnh viễn khỏi DB
+      await supplierModel.findByIdAndDelete(id);
+
+      return { message: 'Đã xoá nhà cung cấp thành công.' };
+    }
+
 }
 
 export default new SupplierService();

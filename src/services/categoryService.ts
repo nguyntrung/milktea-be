@@ -126,6 +126,27 @@ class CategoryService {
 
     return { message: 'Vô hiệu hóa danh mục thành công', category: deactivatedCategory };
   }
+
+    async delete(id: string) {
+      const category = await categoryModel.findById(id);
+      if (!category) {
+        throw new BadRequestError('Danh mục không tồn tại');
+      }
+
+      // Xóa ảnh khỏi Cloudinary nếu có
+      if (category.hinhAnh) {
+        const publicId = category.hinhAnh.split('/').pop()?.split('.')[0];
+        if (publicId) {
+          await cloudinary.uploader.destroy(`category_images/${publicId}`);
+        }
+      }
+
+      // Xoá khỏi database
+      await categoryModel.findByIdAndDelete(id);
+
+      return { message: 'Đã xoá danh mục thành công.' };
+    }
+
 }
 
 export default new CategoryService();

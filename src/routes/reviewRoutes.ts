@@ -1,12 +1,13 @@
 import express from 'express';
 import reviewController from '../controllers/reviewController';
-import { protect, adminOnly } from '../middleware/authMiddleware';
+import { protect, authorizeRoles } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.post('/', protect, adminOnly, reviewController.create);
-router.get('/order/:id', adminOnly, reviewController.getByOrder);
-router.get('/customer/:id', adminOnly, reviewController.getByCustomer);
-router.patch('/:id/deactivate', adminOnly, reviewController.deactivate);
+router.post('/', protect, reviewController.create);
+router.get('/', protect, authorizeRoles('admin'), reviewController.getAll);
+router.get('/order/:id', protect, authorizeRoles('admin'), reviewController.getByOrder);
+router.get('/customer/:id', protect, authorizeRoles('admin'), reviewController.getByCustomer);
+router.patch('/:id/deactivate', protect, authorizeRoles('admin'), reviewController.deactivate);
 
 export default router;
