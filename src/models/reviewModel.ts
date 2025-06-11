@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IReview extends Document {
   _id: string;
   maKhachHang: string;
-  maSanPham: string;
+  maDonHang: string;
   ngayDanhGia: Date;
   diemDanhGia: number;
   noiDung: string;
@@ -14,15 +14,16 @@ export interface IReview extends Document {
 }
 
 export interface ReviewInput {
-  maSanPham: string;
-  iemDanhGia: number;
+  maKhachHang: string;
+  maDonHang: string;
+  diemDanhGia: number;
   noiDung: string;
   hinhAnh: string[];
 }
 
 const reviewSchema = new Schema<IReview>({
   maKhachHang: { type: String, ref: 'NguoiDung', required: true },
-  maSanPham: { type: String, ref: 'SanPham', required: true },
+  maDonHang: { type: String, ref: 'DonHang', required: true },
   ngayDanhGia: { type: Date, default: Date.now },
   diemDanhGia: { type: Number, required: true, min: 1, max: 5 },
   noiDung: { type: String, required: true },
@@ -32,7 +33,7 @@ const reviewSchema = new Schema<IReview>({
   ngayCapNhat: { type: Date, default: Date.now },
 });
 
-reviewSchema.index({ maSanPham: 1 });
+reviewSchema.index({ maDonHang: 1 }, { unique: true });
 reviewSchema.index({ hoatDong: 1 });
 
 export default mongoose.model<IReview>('DanhGia', reviewSchema);

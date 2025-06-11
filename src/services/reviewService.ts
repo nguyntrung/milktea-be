@@ -1,25 +1,38 @@
 import reviewModel, { ReviewInput } from '../models/reviewModel';
+import orderModel from '../models/orderModel';
 import { BadRequestError } from '../utils/errors';
 
 class ReviewService {
   async create(data: ReviewInput) {
+    // Kiểm tra đơn hàng
+    const order = await orderModel.findById(data.maDonHang);
+    const maKhachHang = data.maKhachHang || order?.maKhachHang;
+    if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
+    if (order.maKhachHang !== maKhachHang)
+      throw new BadRequestError('Bạn không có quyền đánh giá đơn hàng này');
+
+    // Kiểm tra đã từng đánh giá chưa
+    const existed = await reviewModel.findOne({ maDonHang: data.maDonHang });
+    if (existed) throw new BadRequestError('Đơn hàng này đã được đánh giá!');
+
     return await reviewModel.create({
       ...data,
+      maKhachHang: order.maKhachHang,
       ngayDanhGia: new Date(),
       hoatDong: true
     });
-  }
-
-  async getByProduct(maSanPham: string) {
-    return await reviewModel
-      .find({ maSanPham, hoatDong: true })
-      .sort({ ngayDanhGia: -1 });
   }
 
   async getByCustomer(maKhachHang: string) {
     return await reviewModel
       .find({ maKhachHang, hoatDong: true })
       .sort({ ngayDanhGia: -1 });
+  }
+
+  // Lấy đánh giá theo đơn hàng
+  async getByOrder(maDonHang: string) {
+    return await reviewModel
+      .findOne({ maDonHang, hoatDong: true });
   }
 
   async deactivate(id: string) {

@@ -5,7 +5,10 @@ import { DonViTinh } from '../types/common';
 export interface IIngredient extends Document {
   ten: string;
   donViTinh: DonViTinh;
-  maNhaCungCap: string | string[];
+  nhaCungCap: {
+    maNhacungCap: string,
+    donGia: number
+  }[];
   hoatDong: boolean;
   nguyenLieuHaoHut: boolean;
   ngayTao: Date;
@@ -15,7 +18,10 @@ export interface IIngredient extends Document {
 export interface IngredientInput {
   ten: string;
   donViTinh: DonViTinh;
-  maNhaCungCap: string | string[];
+  nhaCungCap: {
+    maNhacungCap: string;
+    donGia: number;
+  }[];
   nguyenLieuHaoHut?: boolean;
 }
 
@@ -23,7 +29,13 @@ export interface IngredientInput {
 const ingredientSchema = new Schema<IIngredient>({
   ten: { type: String, required: true, unique: true },
   donViTinh: { type: String, enum: Object.values(DonViTinh), required: true },
-  maNhaCungCap: { type: [String], ref: 'NhaCungCap', required: true },
+  nhaCungCap: [
+    {
+      maNhacungCap: { type: String, ref: 'NhaCungCap', required: true },
+      donGia: { type: Number, required: true },
+      _id: false
+    }
+  ],
   hoatDong: { type: Boolean, default: true },
   nguyenLieuHaoHut: { type: Boolean, default: false },
   ngayTao: { type: Date, default: Date.now },
@@ -31,6 +43,6 @@ const ingredientSchema = new Schema<IIngredient>({
 });
 
 ingredientSchema.index({ hoatDong: 1 });
-ingredientSchema.index({ maNhaCungCap: 1 });
+ingredientSchema.index({ 'nhaCungCap.maNhacungCap': 1 });
 
 export default mongoose.model<IIngredient>('NguyenLieu', ingredientSchema);

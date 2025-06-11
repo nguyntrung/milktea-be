@@ -12,20 +12,20 @@ class ReviewController {
     }
   }
 
-  async getByProduct(req: Request, res: Response) {
+  async getByCustomer(req: Request, res: Response) {
     try {
-      const maSanPham = req.params.id;
-      const data = await reviewService.getByProduct(maSanPham);
+      const maKhachHang = req.params.id;
+      const data = await reviewService.getByCustomer(maKhachHang);
       res.status(200).json({ success: true, data });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({ success: false, message: error.message });
     }
   }
 
-  async getByCustomer(req: Request, res: Response) {
+  async getByOrder(req: Request, res: Response) {
     try {
-      const maKhachHang = req.params.id;
-      const data = await reviewService.getByCustomer(maKhachHang);
+      const maDonHang = req.params.id;
+      const data = await reviewService.getByOrder(maDonHang);
       res.status(200).json({ success: true, data });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({ success: false, message: error.message });

@@ -19,6 +19,10 @@ interface DailyIngredientStat {
   soLuongTon: number;
 }
 
+function round(value: number, decimals = 4): number {
+    return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals);
+  }
+
 class StatisticIngredientService{
   //Hàm tính thời gian
   normalizeDate(dateInput: string | Date) {
@@ -223,65 +227,32 @@ class StatisticIngredientService{
   // Cập nhật trừ kho nguyên liệu theo hóa đơn
   async deductIngredientsByOrder(maHoaDon: string, ngay: Date = new Date()) {
     const dateKey = this.normalizeDate(ngay);
-
-    // Lấy đơn hàng
     const order = await orderModel.findById(maHoaDon);
-    if (!order) {
-      throw new BadRequestError(`Không tìm thấy đơn hàng với ID: ${maHoaDon}`);
-    }
+    if (!order) throw new BadRequestError(`Không tìm thấy đơn hàng với ID: ${maHoaDon}`);
 
-    // Tính nguyên liệu đã dùng trong đơn hàng
     const ingredientUsageMap = await this.calculateIngredientsUsed(maHoaDon);
-
-    // Lấy thống kê động theo ngày
-    const dailyStats = await this.getDailyIngredientStatistic(dateKey) as DailyIngredientStat[];
 
     for (const maNguyenLieu in ingredientUsageMap) {
       const usedQty = ingredientUsageMap[maNguyenLieu];
-
-      const stat = dailyStats.find(s => s.maNguyenLieu.toString() === maNguyenLieu) as DailyIngredientStat;
+      const stat = await statisticIngredientModel.findOne({ ngay: dateKey, maNguyenLieu });
 
       if (!stat) {
-        throw new BadRequestError(`Không tìm thấy thống kê trong ngày cho nguyên liệu: ${maNguyenLieu}`);
+        throw new BadRequestError(`Không tìm thấy thống kê cho nguyên liệu: ${maNguyenLieu}`);
       }
 
-      if (stat.soLuongTon < usedQty) {
-        throw new BadRequestError(`Không đủ nguyên liệu: ${maNguyenLieu}`);
-      }
+      const soLuongTonSauTru = round(stat.soLuongTon - usedQty);
 
-      // Kiểm tra tồn kho thực tế
-      const soLuongTonSauTru = stat.soLuongTon - usedQty;
       if (soLuongTonSauTru < 0) {
-        throw new BadRequestError(`Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${soLuongTonSauTru})`);
+        throw new BadRequestError(
+          `Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${soLuongTonSauTru})`
+        );
       }
 
-      // Cập nhật vào collection thống kê (nếu bạn vẫn muốn lưu thống kê)
-      const existingStat = await statisticIngredientModel.findOne({ ngay: dateKey, maNguyenLieu });
+      stat.soLuongBan = round(stat.soLuongBan + usedQty);
+      stat.soLuongTon = soLuongTonSauTru;
+      stat.ngayCapNhat = new Date();
 
-      if (!existingStat) {
-        await statisticIngredientModel.create({
-          ngay: dateKey,
-          maNguyenLieu,
-          tenNguyenLieu: stat.tenNguyenLieu,
-          donViTinh: stat.donViTinh,
-          soLuongNhap: stat.soLuongNhap,
-          soLuongBan: stat.soLuongBan + usedQty,
-          soLuongHaoHut: stat.soLuongHaoHut,
-          soLuongTon: soLuongTonSauTru,
-          ngayTao: new Date(),
-          ngayCapNhat: new Date(),
-        });
-      } else {
-        existingStat.soLuongBan += usedQty;
-        existingStat.soLuongTon = existingStat.soLuongNhap - existingStat.soLuongBan - existingStat.soLuongHaoHut;
-        existingStat.ngayCapNhat = new Date();
-
-        if (existingStat.soLuongTon < 0) {
-          throw new BadRequestError(`Không đủ nguyên liệu để trừ kho. Nguyên liệu: ${maNguyenLieu}, tồn kho bị âm (${existingStat.soLuongTon})`);
-        }
-
-        await existingStat.save();
-      }
+      await stat.save();
     }
 
     return { message: 'Cập nhật trừ kho nguyên liệu thành công' };

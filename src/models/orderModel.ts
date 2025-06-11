@@ -13,6 +13,7 @@ export interface IOrder extends Document {
   }[];
   tongTien: number;
   nguoiGiao: string;
+  phiVanChuyen: number;
   thongTinNguoiNhan: string;
   thanhToan: {
     phuongThucThanhToan: PhuongThucThanhToan;
@@ -30,11 +31,9 @@ export interface IOrder extends Document {
 export interface OrderInput {
   maKhachHang: string;
   maNhanVien: string;
-  khuyenMai: {
-    maKhuyenMai: string;
-    giaTri: number;
-  }[];
+  khuyenMai: {maKhuyenMai: string;}[];
   nguoiGiao: string;
+  phiVanChuyen: number;
   thongTinNguoiNhan: string;
   thanhToan: {
     phuongThucThanhToan: PhuongThucThanhToan;
@@ -51,10 +50,12 @@ const orderSchema = new Schema<IOrder>({
   khuyenMai: [{
     maKhuyenMai: { type: String, ref: 'KhuyenMai' },
     giaTri: { type: Number },
-    loaiKhuyenMai: {type: String, enum: Object.values(LoaiKhuyenMai), required: false}
+    loaiKhuyenMai: {type: String, enum: Object.values(LoaiKhuyenMai), required: false},
+    _id: false
   }],
-  tongTien: { type: Number, required: true },
   nguoiGiao: { type: String, required: true },
+  phiVanChuyen: { type: Number, required: true },
+  tongTien: { type: Number, required: true },
   thongTinNguoiNhan: { type: String, required: true },
   thanhToan: {
     phuongThucThanhToan: { type: String, enum: Object.values(PhuongThucThanhToan), required: true },
@@ -62,7 +63,7 @@ const orderSchema = new Schema<IOrder>({
   },
   lichSuTrangThai: [{
     thoiGian: { type: Date, default: Date.now },
-    trangThaiDonHang: { type: String, enum: Object.values(TrangThaiDonHang), required: true },
+    trangThaiDonHang: { type: String, enum: Object.values(TrangThaiDonHang), required: true, default: TrangThaiDonHang.CHO_XAC_NHAN },
   }],
   ghiChu: { type: String },
   ngayTao: { type: Date, default: Date.now },
