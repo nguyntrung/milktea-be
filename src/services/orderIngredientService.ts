@@ -13,7 +13,6 @@ class orderIngredientService {
       maNhaCungCap,
       thoiGianCanGiao,
       nguyenLieu,
-      trangThai,
       ghiChu,
       nguoiDat
     } = data;
@@ -30,7 +29,7 @@ class orderIngredientService {
       ngayDat: new Date(),
       thoiGianCanGiao,
       nguyenLieu: nguyenLieu,
-      trangThai,
+      trangThai: TrangThaiDonDatNguyenLieu.CHUA_NHAP,
       ghiChu,
       nguoiDat: { ma: user.id, ten: user.ten },
       nguoiNhap: null,
@@ -120,6 +119,17 @@ class orderIngredientService {
       },
       { new: true }
     );
+
+    if (isNhap) {
+      const chiTiet = await orderIngredientDetailModel.find({ maDonDat: id });
+
+      for (const ct of chiTiet) {
+        await ingredientModel.findByIdAndUpdate(
+          ct.maNguyenLieu,
+          { $inc: { soLuongNhap: ct.soLuong } }
+        );
+      }
+    }
 
     await orderIngredientDetailService.calculateAndUpdateTongTien(updatedOrder!.id);
 
