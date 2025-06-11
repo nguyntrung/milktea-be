@@ -49,9 +49,16 @@ class ProductService {
     return product;
   }
 
-  async getAll() {
+  async getAll(categoryId?: string) {
+    const filter: any = {};
+
+    // Lọc theo category nếu có truyền query
+    if (categoryId) {
+      filter.maDanhMuc = categoryId;
+    }
+
     return await productModel
-      .find()
+      .find(filter)
       .populate('maDanhMuc', 'ten')
       .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
       .populate('toppingCoTheThem', 'ten gia')

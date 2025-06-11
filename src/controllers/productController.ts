@@ -22,7 +22,9 @@ class ProductController {
 
   async getAll(req: Request, res: Response) {
     try {
-      const products = await productService.getAll();
+      const categoryId = req.query.category as string;
+      const products = await productService.getAll(categoryId);
+
       res.status(200).json({
         success: true,
         data: products,
