@@ -22,6 +22,23 @@ class ReviewController {
     }
   }
 
+    async getAll(req: Request, res: Response) {
+      try {
+        const id = req.params.id;
+        const result = await reviewService.getAll;
+        res.status(200).json({
+          success: true,
+          data: result,
+        });
+      } catch (error: any) {
+        res.status(error.statusCode || 500).json({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+
+
   async getByOrder(req: Request, res: Response) {
     try {
       const maDonHang = req.params.id;

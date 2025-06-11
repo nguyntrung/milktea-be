@@ -90,6 +90,18 @@ class ToppingService {
 
     return { message: 'Vô hiệu hóa topping thành công', topping: deactivatedTopping };
   }
+
+    async delete(id: string) {
+      const supplier = await toppingModel.findById(id);
+      if (!supplier) {
+        throw new BadRequestError('Nhà cung cấp không tồn tại');
+      }
+
+      // Xoá vĩnh viễn khỏi DB
+      await toppingModel.findByIdAndDelete(id);
+
+      return { message: 'Đã xoá nhà cung cấp vĩnh viễn khỏi hệ thống.' };
+    }
 }
 
 export default new ToppingService();

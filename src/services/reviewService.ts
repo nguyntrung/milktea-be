@@ -35,6 +35,13 @@ class ReviewService {
       .findOne({ maDonHang, hoatDong: true });
   }
 
+    async getAll() {
+      return await reviewModel
+        .find({ hoatDong: true })
+        .sort({ ngayDanhGia: -1 });
+    }
+
+
   async deactivate(id: string) {
     const review = await reviewModel.findById(id);
     if (!review) throw new BadRequestError('Đánh giá không tồn tại');

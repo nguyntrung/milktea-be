@@ -14,5 +14,6 @@ router.get('/:id', categoryController.getById);
 router.post('/', protect, adminOnly, upload.single('hinhAnh'), categoryController.create);
 router.put('/:id', protect, adminOnly, upload.single('hinhAnh'), categoryController.update);
 router.patch('/:id/deactivate', protect, adminOnly, categoryController.deactivate);
+router.delete('/:id', protect, adminOnly, categoryController.delete);
 
 export default router;

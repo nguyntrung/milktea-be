@@ -12,5 +12,6 @@ router.get('/:id', protect, authorizeRoles('admin', 'nhan-vien-kho', 'nhan-vien-
 router.post('/', protect, authorizeRoles('admin'), ingredientController.create);
 router.put('/:id', protect, authorizeRoles('admin'),  ingredientController.update);
 router.patch('/:id/deactivate',protect, authorizeRoles('admin'), ingredientController.deactivate);
+router.delete('/:id', protect,protect, authorizeRoles('admin'), ingredientController.delete);
 
 export default router;

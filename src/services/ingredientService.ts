@@ -105,6 +105,18 @@ class IngredientService {
 
     return { message: 'Vô hiệu hóa nguyên liệu thành công', ingredient: deactivatedIngredient };
   }
+
+  async delete(id: string) {
+    const supplier = await ingredientModel.findById(id);
+    if (!supplier) {
+      throw new BadRequestError('Nhà cung cấp không tồn tại');
+    }
+
+    // Xoá vĩnh viễn khỏi DB
+    await ingredientModel.findByIdAndDelete(id);
+
+    return { message: 'Đã xoá nguyên liệu thành công.' };
+  }
 }
 
 export default new IngredientService();

@@ -84,6 +84,22 @@ class CategoryController {
       });
     }
   }
+  
+    async delete(req: Request, res: Response) {
+      try {
+        const id = req.params.id;
+        const result = await categoryService.delete(id);
+        res.status(200).json({
+          success: true,
+          data: result,
+        });
+      } catch (error: any) {
+        res.status(error.statusCode || 500).json({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
 }
 
 export default new CategoryController();
