@@ -25,7 +25,7 @@ class ReviewController {
     async getAll(req: Request, res: Response) {
       try {
         const id = req.params.id;
-        const result = await reviewService.getAll;
+        const result = await reviewService.getAll();
         res.status(200).json({
           success: true,
           data: result,
@@ -37,7 +37,6 @@ class ReviewController {
         });
       }
     }
-
 
   async getByOrder(req: Request, res: Response) {
     try {

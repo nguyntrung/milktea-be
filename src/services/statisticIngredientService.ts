@@ -296,7 +296,15 @@ class StatisticIngredientService{
       }
 
       stat.soLuongHaoHut = haoHutChuyenDoi;
-      stat.soLuongTon = stat.soLuongNhap - stat.soLuongBan - stat.soLuongHaoHut;
+      const prevDate = new Date(dateKey.getTime() - 24 * 60 * 60 * 1000);
+      const prev = await statisticIngredientModel.findOne({
+        ngay: prevDate,
+        maNguyenLieu: item.maNguyenLieu,
+      });
+      const tonHomTruoc = prev?.soLuongTon || 0;
+
+      stat.soLuongTon = tonHomTruoc + stat.soLuongNhap - stat.soLuongBan - stat.soLuongHaoHut;
+
       stat.ngayCapNhat = new Date();
 
       if (stat.soLuongTon < 0) {

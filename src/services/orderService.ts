@@ -54,8 +54,6 @@ class OrderService {
       ngayCapNhat: new Date(),
     });
 
-    await this.recalculateTotal(order._id?.toString() ?? '');
-
     //Tạo thông báo
     try {
       await notificationService.create({
@@ -152,7 +150,7 @@ class OrderService {
     };
   }
 
-  // Hàm cập nhật tổng tiền đơn hàng
+  //Tinsh lại tổng tiền
   async recalculateTotal(maHoaDon: string) {
     const order = await orderModel.findById(maHoaDon);
     if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
@@ -160,13 +158,32 @@ class OrderService {
     const details = await orderDetailModel.find({ maHoaDon });
     const tongTienHang = details.reduce((sum, d) => sum + d.thanhTien, 0);
 
-    const tongKhuyenMai = await promotionService.calculateDiscounts(order.khuyenMai, tongTienHang);
-    
+    const validPromotions = [];
 
+    for (const km of order.khuyenMai) {
+      const promo = await promotionModel.findOne({ maKhuyenMai: km.maKhuyenMai });
+      if (!promo) {
+        throw new BadRequestError(`Khuyến mãi '${km.maKhuyenMai}' không tồn tại.`);
+      }
+
+      const isValid = promotionService.isValidForOrder({ tongTienHang }, promo);
+      if (!isValid) {
+        throw new BadRequestError(`Khuyến mãi '${km.maKhuyenMai}' không đủ điều kiện để áp dụng.`);
+      }
+
+      validPromotions.push({
+        maKhuyenMai: km.maKhuyenMai,
+        loaiKhuyenMai: km.loaiKhuyenMai,
+        giaTri: km.giaTri,
+      });
+    }
+
+    const tongKhuyenMai = await promotionService.calculateDiscounts(validPromotions, tongTienHang);
     const tongTien = tongTienHang - tongKhuyenMai + order.phiVanChuyen;
 
     order.tongTienHang = tongTienHang;
     order.tongTien = tongTien;
+    order.khuyenMai = validPromotions;
     order.ngayCapNhat = new Date();
 
     await order.save();
