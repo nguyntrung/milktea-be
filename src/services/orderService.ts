@@ -33,13 +33,12 @@ class OrderService {
       })
     );
 
-    // Tạo đơn hàng với tổng tiền 0
     const order: IOrder = await orderModel.create({
       maKhachHang,
       maNhanVien,
       ngayLap: new Date(),
       tongTienHang: 0,
-      khuyenMai : fullPromotionList, 
+      khuyenMai: fullPromotionList, 
       nguoiGiao,
       phiVanChuyen,
       tongTien: 0,
@@ -54,13 +53,12 @@ class OrderService {
       ngayCapNhat: new Date(),
     });
 
-    //Tạo thông báo
     try {
       await notificationService.create({
         tieuDe: 'Đơn hàng mới',
         noiDung: `Khách hàng đã tạo đơn hàng mới.`,
         loaiThongBao: LoaiThongBao.DON_HANG_MOI,
-        maNguoiNhan: maNhanVien, // hoặc ID admin xử lý đơn hàng
+        maNguoiNhan: maNhanVien,
         lienKet: `/order-details/${order._id}`,
       });
     } catch (error) {
@@ -99,6 +97,54 @@ class OrderService {
       .sort({ ngayTao: -1 });
   }
 
+  // Lấy danh sách đơn hàng với phân trang
+  async getPaginated(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      orderModel
+        .find()
+        .populate('maKhachHang', 'ten')
+        .populate('maNhanVien', 'ten')
+        .sort({ ngayTao: -1 })
+        .skip(skip)
+        .limit(limit),
+      orderModel.countDocuments(),
+    ]);
+
+    return {
+      orders,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      limit,
+    };
+  }
+
+  // Lấy danh sách đơn hàng theo user với phân trang
+  async getPaginatedByCustomer(maKhachHang: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      orderModel
+        .find({ maKhachHang })
+        .populate('maKhachHang', 'ten')
+        .populate('maNhanVien', 'ten')
+        .sort({ ngayTao: -1 })
+        .skip(skip)
+        .limit(limit),
+      orderModel.countDocuments({ maKhachHang }),
+    ]);
+
+    return {
+      orders,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      limit,
+    };
+  }
+
   // Cập nhật trạng thái đơn hàng
   async updateStatus(id: string, trangThaiDonHang: TrangThaiDonHang) {
     const order = await orderModel.findById(id);
@@ -111,7 +157,6 @@ class OrderService {
     order.ngayCapNhat = new Date();
     await order.save();
 
-    // Gửi thông báo đến khách hàng
     try {
       await notificationService.create({
         tieuDe: 'Cập nhật trạng thái đơn hàng',
@@ -150,7 +195,7 @@ class OrderService {
     };
   }
 
-  //Tinsh lại tổng tiền
+  // Tính lại tổng tiền
   async recalculateTotal(maHoaDon: string) {
     const order = await orderModel.findById(maHoaDon);
     if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
@@ -191,21 +236,18 @@ class OrderService {
     return order;
   }
 
-  //lọc đơn hàng theo điều kiện
+  // Lọc đơn hàng theo điều kiện
   async filterByDate({ ngay, thang, nam }: { ngay?: number, thang?: number, nam: number }) {
     let startDate: Date;
     let endDate: Date;
 
     if (ngay && thang) {
-      // Lọc theo ngày cụ thể
       startDate = new Date(Date.UTC(nam, thang - 1, ngay));
       endDate = new Date(Date.UTC(nam, thang - 1, ngay + 1));
     } else if (thang) {
-      // Lọc theo tháng
       startDate = new Date(Date.UTC(nam, thang - 1, 1));
       endDate = new Date(Date.UTC(nam, thang, 1));
     } else {
-      // Lọc theo năm
       startDate = new Date(Date.UTC(nam, 0, 1));
       endDate = new Date(Date.UTC(nam + 1, 0, 1));
     }
@@ -219,7 +261,6 @@ class OrderService {
 
     return orders;
   }
-
 }
 
 export default new OrderService();

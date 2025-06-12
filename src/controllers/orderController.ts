@@ -38,6 +38,64 @@ class OrderController {
     }
   }
 
+  // Lấy danh sách đơn hàng với phân trang
+  async getPaginated(req: Request, res: Response) {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+      if (isNaN(page) || page < 1) {
+        throw new BadRequestError('Số trang không hợp lệ');
+      }
+      if (isNaN(limit) || limit < 1) {
+        throw new BadRequestError('Giới hạn không hợp lệ');
+      }
+
+      const result = await orderService.getPaginated(page, limit);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  // Lấy danh sách đơn hàng theo user với phân trang
+  async getPaginatedByCustomer(req: Request, res: Response) {
+    try {
+      const userId = req.params.userId;
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+      if (!userId) {
+        throw new BadRequestError('Thiếu mã khách hàng');
+      }
+      if (isNaN(page) || page < 1) {
+        throw new BadRequestError('Số trang không hợp lệ');
+      }
+      if (isNaN(limit) || limit < 1) {
+        throw new BadRequestError('Giới hạn không hợp lệ');
+      }
+
+      const result = await orderService.getPaginatedByCustomer(userId, page, limit);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
   // Lấy đơn hàng theo ID
   async getById(req: Request, res: Response) {
     try {
@@ -55,7 +113,7 @@ class OrderController {
     }
   }
 
-    // Lấy danh sách đơn hàng theo mã khách hàng
+  // Lấy danh sách đơn hàng theo mã khách hàng
   async getByCustomerId(req: Request, res: Response) {
     try {
       const userId = req.params.userId;
@@ -121,7 +179,7 @@ class OrderController {
     }
   }
   
-  //Thống kê theo điều kiện
+  // Thống kê theo điều kiện
   async filterOrdersByDate(req: Request, res: Response) {
     try {
       const day = req.query.day ? parseInt(req.query.day as string) : undefined;
@@ -146,7 +204,6 @@ class OrderController {
       });
     }
   }
-
 }
 
 export default new OrderController();
