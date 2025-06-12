@@ -567,6 +567,57 @@ class StatisticIngredientService{
     };
   }
 
+  async getRevenueByDaysInMonth(month: number, year: number) {
+    const startDate = new Date(Date.UTC(year, month - 1, 1));
+    const endDate = new Date(Date.UTC(year, month, 1));
+
+    const result = await orderDetailModel.aggregate([
+      {
+        $addFields: {
+          orderObjId: { $toObjectId: '$maHoaDon' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'donhangs',
+          localField: 'orderObjId',
+          foreignField: '_id',
+          as: 'donHang'
+        }
+      },
+      { $unwind: '$donHang' },
+      {
+        $match: {
+          'donHang.thanhToan.trangThaiThanhToan': 'daThanhToan',
+          'donHang.ngayTao': { $gte: startDate, $lt: endDate }
+        }
+      },
+      {
+        $addFields: {
+          ngay: { $dayOfMonth: '$donHang.ngayTao' }
+        }
+      },
+      {
+        $group: {
+          _id: '$ngay',
+          doanhThu: { $sum: '$donHang.tongTien' },
+          tongSanPhamBanDuoc: { $sum: '$soLuong' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Tạo đủ 31 ngày, fill dữ liệu còn thiếu
+    const fullDays = Array.from({ length: 31 }, (_, i) => i + 1);
+    const map = new Map(result.map(r => [r._id, r]));
+
+    return fullDays.map(ngay => ({
+      ngay,
+      doanhThu: map.get(ngay)?.doanhThu || 0,
+      tongSanPhamBanDuoc: map.get(ngay)?.tongSanPhamBanDuoc || 0
+    }));
+  }
+  
   // --------------------------------------------------------
   //Thống kê doanh thu & số lượng bán theo NGÀY
   // --------------------------------------------------------
@@ -704,6 +755,59 @@ class StatisticIngredientService{
       tongSanPhamBanDuoc
     };
   }
+
+  async getRevenueByMonthsInYear(year: number) {
+    const startDate = new Date(Date.UTC(year, 0, 1));
+    const endDate = new Date(Date.UTC(year + 1, 0, 1));
+
+    const result = await orderDetailModel.aggregate([
+      {
+        $addFields: {
+          orderObjId: { $toObjectId: '$maHoaDon' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'donhangs',
+          localField: 'orderObjId',
+          foreignField: '_id',
+          as: 'donHang'
+        }
+      },
+      { $unwind: '$donHang' },
+      {
+        $match: {
+          'donHang.thanhToan.trangThaiThanhToan': 'daThanhToan',
+          'donHang.ngayTao': { $gte: startDate, $lt: endDate }
+        }
+      },
+      {
+        $addFields: {
+          thang: { $month: '$donHang.ngayTao' }
+        }
+      },
+      {
+        $group: {
+          _id: '$thang',
+          doanhThu: { $sum: '$donHang.tongTien' },
+          tongSanPhamBanDuoc: { $sum: '$soLuong' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Fill đủ 12 tháng
+    const fullMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+    const map = new Map(result.map(r => [r._id, r]));
+
+    return fullMonths.map(thang => ({
+      thang,
+      nam: year,
+      doanhThu: map.get(thang)?.doanhThu || 0,
+      tongSanPhamBanDuoc: map.get(thang)?.tongSanPhamBanDuoc || 0
+    }));
+  }
+
 }
 
 export default new StatisticIngredientService();

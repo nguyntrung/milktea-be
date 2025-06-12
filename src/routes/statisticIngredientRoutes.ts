@@ -8,8 +8,10 @@ router.get('/month', protect, authorizeRoles('admin'), statisticIngredientContro
 router.get('/daily', protect, authorizeRoles('admin'), statisticIngredientController.getDailyStatistics);
 router.get('/year', protect, authorizeRoles('admin'), statisticIngredientController.getYearlyStatistics);
 router.get('/revenue/month', protect, authorizeRoles('admin'), statisticIngredientController.getMonthlyRevenue);
+router.get('/revenue/dayinmonth', protect, authorizeRoles('admin'), statisticIngredientController.getDayInMonthlyRevenue);
 router.get('/revenue/daily', protect, authorizeRoles('admin'), statisticIngredientController.getDailyRevenue);
 router.get('/revenue/year', protect, authorizeRoles('admin'), statisticIngredientController.getYearlyRevenue);
+router.get('/revenue/monthinyear', protect, authorizeRoles('admin'), statisticIngredientController.getMonthInYearlyRevenue);
 router.get('/', protect, authorizeRoles('admin', 'nhan-vien-kho'), statisticIngredientController.getAll);
 router.get('/:id', protect, authorizeRoles('admin', 'nhan-vien-kho'), statisticIngredientController.getById);
 router.post('/haohut', protect, authorizeRoles('admin', 'nhan-vien-kho'), statisticIngredientController.updateHaoHut);

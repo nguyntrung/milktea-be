@@ -202,6 +202,34 @@ class StatisticIngredientController {
     }
   }
 
+  //Thống kê doanh thu theo Tháng
+  async getDayInMonthlyRevenue(req: Request, res: Response) {
+    try {
+      const month = parseInt(req.query.month as string);
+      const year = parseInt(req.query.year as string);
+
+      if (isNaN(month) || isNaN(year)) {
+        res.status(400).json({
+          success: false,
+          message: 'Tháng hoặc năm không hợp lệ',
+        });
+        return;
+      }
+
+      const data = await statisticIngredientService.getRevenueByDaysInMonth(month, year);
+
+      res.status(200).json({
+        success: true,
+        data,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || 'Lỗi máy chủ',
+      });
+    }
+  }
+
   //Thống kê doanh thu theo Ngày
   async getDailyRevenue(req: Request, res: Response) {
     try {
@@ -245,6 +273,33 @@ class StatisticIngredientController {
       }
 
       const data = await statisticIngredientService.getRevenueByYear(year);
+
+      res.status(200).json({
+        success: true,
+        data,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  //Thống kê doanh thu theo Năm
+  async getMonthInYearlyRevenue(req: Request, res: Response): Promise<void> {
+    try {
+      const year = parseInt(req.query.year as string);
+
+      if (isNaN(year)) {
+        res.status(400).json({
+          success: false,
+          message: 'Tháng và năm không hợp lệ',
+        });
+        return;
+      }
+
+      const data = await statisticIngredientService.getRevenueByMonthsInYear(year);
 
       res.status(200).json({
         success: true,
