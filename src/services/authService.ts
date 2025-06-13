@@ -96,9 +96,9 @@ class AuthService {
     }
 
     // Prevent updating diemTichLuy, lichSuDiem, and khuyenMaiDaSuDung directly
-    if (data.diemTichLuy || data.lichSuDiem || data.khuyenMaiDaSuDung) {
-      throw new BadRequestError('Không thể cập nhật điểm tích lũy, lịch sử điểm hoặc khuyến mãi đã sử dụng trực tiếp');
-    }
+    // if (data.diemTichLuy || data.lichSuDiem || data.khuyenMaiDaSuDung) {
+    //   throw new BadRequestError('Không thể cập nhật điểm tích lũy, lịch sử điểm hoặc khuyến mãi đã sử dụng trực tiếp');
+    // }
 
     const updatedUser = await authModel
       .findByIdAndUpdate(
