@@ -60,6 +60,8 @@ class OrderDetailService {
 
     await orderDetail.save();
 
+    await statisticIngredientService.getDailyIngredientStatistic(new Date());
+
     //Tính lại tổng tiền đơn hàng
     const allDetails = await orderDetailModel.find({ maHoaDon });
     const tongTienHang = allDetails.reduce((sum, d) => sum + d.thanhTien, 0);
@@ -108,6 +110,8 @@ class OrderDetailService {
     }
       // Cập nhật lại tổng tiền đơn hàng
     await orderService.recalculateTotal(updated.maHoaDon);
+    
+    await statisticIngredientService.getDailyIngredientStatistic(new Date());
 
     // ** Gọi trừ kho nguyên liệu **
     await statisticIngredientService.deductIngredientsByOrder(updated.maHoaDon);

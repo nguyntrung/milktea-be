@@ -607,8 +607,10 @@ class StatisticIngredientService{
       { $sort: { _id: 1 } }
     ]);
 
-    // Tạo đủ 31 ngày, fill dữ liệu còn thiếu
-    const fullDays = Array.from({ length: 31 }, (_, i) => i + 1);
+    // Tính chính xác số ngày trong tháng (bao gồm cả năm nhuận)
+    const soNgayTrongThang = new Date(year, month, 0).getDate(); // tháng đã trừ sẵn 1
+
+    const fullDays = Array.from({ length: soNgayTrongThang }, (_, i) => i + 1);
     const map = new Map(result.map(r => [r._id, r]));
 
     return fullDays.map(ngay => ({
@@ -617,7 +619,7 @@ class StatisticIngredientService{
       tongSanPhamBanDuoc: map.get(ngay)?.tongSanPhamBanDuoc || 0
     }));
   }
-  
+
   // --------------------------------------------------------
   //Thống kê doanh thu & số lượng bán theo NGÀY
   // --------------------------------------------------------
