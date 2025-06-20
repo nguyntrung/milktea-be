@@ -5,7 +5,7 @@ import { protect, authorizeRoles } from '../middleware/authMiddleware';
 const router = express.Router();
 
 router.post('/', protect, reviewController.create);
-router.get('/', protect, reviewController.getAll);
+// router.get('/', protect, reviewController.getAll);
 router.get('/', reviewController.getAll);
 router.get('/order/:id', reviewController.getByOrder);
 router.get('/customer/:id', reviewController.getByCustomer);
