@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import productService from '../services/productService';
 import { ProductInput } from '../models/productModel';
 import cloudinary from '../config/cloudinary';
+import { BadRequestError } from '../utils/errors';
 
 class ProductController {
   async create(req: Request, res: Response) {
@@ -28,6 +29,33 @@ class ProductController {
       res.status(200).json({
         success: true,
         data: products,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async getPaginated(req: Request, res: Response) {
+    try {
+      const page = req.query.page ? parseInt(req.query.page as string) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const categoryId = req.query.category as string;
+
+      if (isNaN(page) || page < 1) {
+        throw new BadRequestError('Số trang không hợp lệ');
+      }
+      if (isNaN(limit) || limit < 1) {
+        throw new BadRequestError('Giới hạn không hợp lệ');
+      }
+
+      const result = await productService.getPaginated(page, limit, categoryId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
       });
     } catch (error: any) {
       res.status(error.statusCode || 500).json({

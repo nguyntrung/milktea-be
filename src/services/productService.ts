@@ -65,6 +65,36 @@ class ProductService {
       .sort({ ngayTao: -1 });
   }
 
+  async getPaginated(page: number = 1, limit: number = 10, categoryId?: string) {
+    const skip = (page - 1) * limit;
+    const filter: any = {};
+
+    // Lọc theo category nếu có
+    if (categoryId) {
+      filter.maDanhMuc = categoryId;
+    }
+
+    const [products, total] = await Promise.all([
+      productModel
+        .find(filter)
+        .populate('maDanhMuc', 'ten')
+        .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
+        .populate('toppingCoTheThem', 'ten gia')
+        .sort({ ngayTao: -1 })
+        .skip(skip)
+        .limit(limit),
+      productModel.countDocuments(filter),
+    ]);
+
+    return {
+      products,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      limit,
+    };
+  }
+
   async getById(id: string) {
     const product = await productModel
       .findById(id)
@@ -78,15 +108,15 @@ class ProductService {
   }
 
   async getByCategoryId(maDanhMuc: string) {
-  const products = await productModel
-    .find({ maDanhMuc, hoatDong: true })
-    .populate('maDanhMuc', 'ten')
-    .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
-    .populate('toppingCoTheThem', 'ten gia')
-    .sort({ ngayTao: -1 });
+    const products = await productModel
+      .find({ maDanhMuc, hoatDong: true })
+      .populate('maDanhMuc', 'ten')
+      .populate('luaChonSize.thanhPhan.maNguyenLieu', 'ten')
+      .populate('toppingCoTheThem', 'ten gia')
+      .sort({ ngayTao: -1 });
 
-  return products;
-}
+    return products;
+  }
 
   async update(id: string, data: Partial<ProductInput>) {
     const product = await productModel.findById(id);
