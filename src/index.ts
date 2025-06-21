@@ -20,6 +20,7 @@ import reviewRoutes from './routes/reviewRoutes';
 import storeRoutes from './routes/storeRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import bannerRoutes from './routes/bannerRoutes';
+import userVerifyRoutes from './routes/userVerifyRoutes';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/verify', userVerifyRoutes);
 
 // Sample route
 app.get('/', (_req, res) => {
