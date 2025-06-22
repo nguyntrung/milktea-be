@@ -11,6 +11,8 @@ export interface IOrder extends Document {
     giaTri: number;
     loaiKhuyenMai:LoaiKhuyenMai
   }[];
+  diemTichLuySuDung?: number;
+  daCongDiemTichLuy: boolean,
   tongTien: number;
   nguoiGiao: string;
   phiVanChuyen: number;
@@ -34,6 +36,7 @@ export interface OrderInput {
   khuyenMai: {maKhuyenMai: string;}[];
   nguoiGiao: string;
   phiVanChuyen: number;
+  diemTichLuySuDung?: number;
   thongTinNguoiNhan: string;
   thanhToan: {
     phuongThucThanhToan: PhuongThucThanhToan;
@@ -55,6 +58,8 @@ const orderSchema = new Schema<IOrder>({
   }],
   nguoiGiao: { type: String, required: true },
   phiVanChuyen: { type: Number, required: true },
+  diemTichLuySuDung: { type: Number, default: 0 },
+  daCongDiemTichLuy: { type: Boolean, default: false },
   tongTien: { type: Number, required: true },
   thongTinNguoiNhan: { type: String, required: true },
   thanhToan: {

@@ -184,6 +184,25 @@ class AuthService {
 
     return updatedUser;
   }
+
+  //Đổi mật khẩu
+  async resetPassword(maNguoiDung: string, matKhauMoi: string, xacNhanMatKhau: string) {
+    const user = await authModel.findOne({ _id: maNguoiDung, hoatDong: true });
+    if (!user) {
+      throw new BadRequestError('Người dùng không tồn tại hoặc đã bị vô hiệu hóa');
+    }
+
+    if (matKhauMoi !== xacNhanMatKhau) {
+      throw new BadRequestError('Mật khẩu xác nhận không khớp');
+    }
+
+    const hashedPassword = await bcrypt.hash(matKhauMoi, 10);
+    user.matKhau = hashedPassword;
+    user.ngayCapNhat = new Date();
+    await user.save();
+
+    return { message: 'Đặt lại mật khẩu thành công' };
+  }
 }
 
 export default new AuthService();

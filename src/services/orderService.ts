@@ -2,10 +2,11 @@ import orderModel, { IOrder, OrderInput } from '../models/orderModel';
 import orderDetailModel from '../models/orderDetailModel';
 import promotionService from './promotionService';
 import promotionModel from '../models/promotionModel';
+import userModel from '../models/userModel';
 import { BadRequestError } from '../utils/errors';
 import { TrangThaiDonHang, LoaiKhuyenMai } from '../types/common';
 import notificationService from './notificationService';
-import { LoaiThongBao } from '../types/common';
+import { LoaiThongBao, LoaiGiaoDich, TrangThaiThanhToan } from '../types/common';
 
 class OrderService {
   // Tạo đơn hàng mới
@@ -18,6 +19,7 @@ class OrderService {
       thongTinNguoiNhan,
       khuyenMai = [],
       thanhToan,
+      diemTichLuySuDung = 0,
       ghiChu = ''
     } = data;
 
@@ -33,6 +35,16 @@ class OrderService {
       })
     );
 
+    // Lấy người dùng
+    const user = await userModel.findById(maKhachHang);
+    if (!user) throw new BadRequestError('Người dùng không tồn tại');
+
+    // Số điểm có thể dùng: <= điểm tích lũy của user
+    const diemHienCo  = user.diemTichLuy || 0;
+    
+    if (diemTichLuySuDung > diemHienCo)
+    throw new BadRequestError(`Bạn chỉ có ${diemHienCo} điểm, không thể dùng ${diemTichLuySuDung} điểm.`);
+
     const order: IOrder = await orderModel.create({
       maKhachHang,
       maNhanVien,
@@ -41,6 +53,7 @@ class OrderService {
       khuyenMai: fullPromotionList, 
       nguoiGiao,
       phiVanChuyen,
+      diemTichLuySuDung,  
       tongTien: 0,
       thongTinNguoiNhan,
       thanhToan,
@@ -52,6 +65,19 @@ class OrderService {
       ngayTao: new Date(),
       ngayCapNhat: new Date(),
     });
+
+    // Trừ điểm nếu có sử dụng
+    if (diemTichLuySuDung > 0) {
+      user.diemTichLuy -= diemTichLuySuDung;
+      user.lichSuDiem.push({
+        thoiGian: new Date(),
+        diem: diemTichLuySuDung,
+        noiDung: `Trừ điểm khi đặt đơn hàng ${order._id}`,
+        diemConLai: user.diemTichLuy,
+        loaiGiaoDich: LoaiGiaoDich.TRU
+      });
+      await user.save();
+    }
 
     try {
       await notificationService.create({
@@ -150,6 +176,10 @@ class OrderService {
     const order = await orderModel.findById(id);
     if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
 
+    if (trangThaiDonHang === TrangThaiDonHang.DA_GIAO) {
+      await this.caculateLoyaltyPoint(order.id);
+    }
+
     order.lichSuTrangThai.push({
       thoiGian: new Date(),
       trangThaiDonHang,
@@ -224,7 +254,13 @@ class OrderService {
     }
 
     const tongKhuyenMai = await promotionService.calculateDiscounts(validPromotions, tongTienHang);
-    const tongTien = tongTienHang - tongKhuyenMai + order.phiVanChuyen;
+    let tongTien = tongTienHang - tongKhuyenMai + order.phiVanChuyen;
+
+    // Trừ điểm tích lũy (nếu có)
+    if (order.diemTichLuySuDung && order.diemTichLuySuDung > 0) {
+      tongTien -= order.diemTichLuySuDung;
+      if (tongTien < 0) tongTien = 0; // Không cho tổng âm
+    }
 
     order.tongTienHang = tongTienHang;
     order.tongTien = tongTien;
@@ -235,6 +271,34 @@ class OrderService {
 
     return order;
   }
+
+  async caculateLoyaltyPoint(orderId: string) {
+    const order = await orderModel.findById(orderId);
+    if (!order) throw new BadRequestError('Đơn hàng không tồn tại');
+
+    if (order.daCongDiemTichLuy) return; // đã cộng điểm rồi thì bỏ qua
+
+    const user = await userModel.findById(order.maKhachHang);
+    if (!user) throw new BadRequestError('Không tìm thấy người dùng.');
+
+    const isPaid = order.thanhToan.trangThaiThanhToan === TrangThaiThanhToan.DA_THANH_TOAN;
+    if (!isPaid) return;
+
+    const diemCong = Math.floor(order.tongTien * 0.05);
+    user.diemTichLuy += diemCong;
+    user.lichSuDiem.push({
+      thoiGian: new Date(),
+      diem: diemCong,
+      noiDung: `Cộng điểm từ đơn hàng ${order._id}`,
+      diemConLai: user.diemTichLuy,
+      loaiGiaoDich: LoaiGiaoDich.CONG
+    });
+
+    await user.save();
+    order.daCongDiemTichLuy = true;
+    await order.save();
+  }
+
 
   // Lọc đơn hàng theo điều kiện
   async filterByDate({ ngay, thang, nam }: { ngay?: number, thang?: number, nam: number }) {
@@ -260,6 +324,56 @@ class OrderService {
     .sort({ ngayTao: -1 });
 
     return orders;
+  }
+
+  //Lấy danh sách các sản phẩm bán chạy
+  async getTopSellingProducts(limit = 8) {
+    const topProducts = await orderDetailModel.aggregate([
+      {
+        $group: {
+          _id: "$maSanPham",
+          soLuongDaBan: { $sum: "$soLuong" }
+        }
+      },
+      {
+        $addFields: {
+          maSanPhamObjectId: { $toObjectId: "$_id" }
+        }
+      },
+      {
+        $lookup: {
+          from: "sanphams",
+          localField: "maSanPhamObjectId",
+          foreignField: "_id",
+          as: "sanPham"
+        }
+      },
+      {
+        $unwind: "$sanPham"
+      },
+      {
+        $sort: { soLuongDaBan: -1 }
+      },
+      {
+        $limit: limit
+      },
+      {
+        $project: {
+          _id: "$sanPham._id",
+          ten: "$sanPham.ten",
+          hinhAnh: "$sanPham.hinhAnh",
+          soLuongDaBan: 1,
+          giaCoBan: "$sanPham.giaCoBan",
+          moTa: "$sanPham.moTa"
+        }
+      }
+    ]);
+
+    //Gán thứ hạng top bằng JS:
+    return topProducts.map((item, index) => ({
+      ...item,
+      top: index + 1,
+    }));
   }
 }
 

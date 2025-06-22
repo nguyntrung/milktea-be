@@ -164,6 +164,20 @@ class AuthController {
       });
     }
   }
+
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const { maNguoiDung, matKhauMoi, xacNhanMatKhau } = req.body;
+
+      const result = await authService.resetPassword(maNguoiDung, matKhauMoi, xacNhanMatKhau);
+      res.status(200).json({ success: true, message: result.message });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
 }
 
 export default new AuthController();

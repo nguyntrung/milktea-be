@@ -204,6 +204,22 @@ class OrderController {
       });
     }
   }
+
+  // Lấy tất cả đơn hàng
+  async getSellerProduct(req: Request, res: Response) {
+    try {
+      const orders = await orderService.getTopSellingProducts();
+      res.status(200).json({
+        success: true,
+        data: orders,
+      });
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
 }
 
 export default new OrderController();
