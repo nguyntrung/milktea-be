@@ -7,7 +7,7 @@ import fs from 'fs';
 
 const storage = multer.diskStorage({
   destination: function (_req, _file, cb) {
-    const uploadPath = path.join(__dirname, '../../uploads');
+    const uploadPath = path.join(__dirname, '../../Uploads');
     fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
@@ -18,8 +18,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
-
 
 const router = express.Router();
 
@@ -34,10 +32,11 @@ router.post(
 router.post('/', protect, adminOnly, productController.create);
 router.put('/:id', protect, adminOnly, productController.update);
 router.delete('/:id', protect, adminOnly, productController.delete);
-router.post('/upload-image', protect, adminOnly, productController.uploadToCloudinary);
+// router.post('/upload-image', protect, adminOnly, productController.uploadToCloudinary);
 
 // Routes accessible to all authenticated users
 router.get('/', productController.getAll);
+router.get('/paginated', productController.getPaginated);
 router.get('/:id', productController.getById);
 router.get('/category/:maDanhMuc', productController.getByCategoryId);
 
