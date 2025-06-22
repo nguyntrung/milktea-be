@@ -180,6 +180,11 @@ class OrderService {
       await this.caculateLoyaltyPoint(order.id);
     }
 
+    // Nếu chưa thanh toán thì cập nhật sang đã thanh toán
+    if (order.thanhToan.trangThaiThanhToan !== TrangThaiThanhToan.DA_THANH_TOAN) {
+      order.thanhToan.trangThaiThanhToan = TrangThaiThanhToan.DA_THANH_TOAN;
+    }
+
     order.lichSuTrangThai.push({
       thoiGian: new Date(),
       trangThaiDonHang,
