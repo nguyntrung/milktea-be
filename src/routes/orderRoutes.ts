@@ -13,7 +13,7 @@ router.get('/filter', protect, orderController.filterOrdersByDate);
 
 // Routes có thể truy cập cho tất cả người dùng đã xác thực
 router.get('/', protect, orderController.getAll);
-router.get('/top-seller', protect, orderController.getSellerProduct);
+router.get('/top-seller', orderController.getSellerProduct);
 router.get('/paginated', protect, orderController.getPaginated);
 router.get('/auth/:userId/paginated', protect, orderController.getPaginatedByCustomer);
 router.get('/:id', protect, orderController.getById);
