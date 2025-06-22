@@ -202,6 +202,19 @@ class OrderService {
     return order;
   }
 
+  async updatePaymentStatus(orderId: string, trangThaiThanhToan: TrangThaiThanhToan) {
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      throw new BadRequestError('Đơn hàng không tồn tại');
+    }
+
+    order.thanhToan.trangThaiThanhToan = trangThaiThanhToan;
+    order.ngayCapNhat = new Date();
+    await order.save();
+
+    return order;
+  }
+
   // Hủy đơn hàng
   async deactivate(id: string) {
     const order = await orderModel.findById(id);

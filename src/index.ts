@@ -21,6 +21,7 @@ import storeRoutes from './routes/storeRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import bannerRoutes from './routes/bannerRoutes';
 import userVerifyRoutes from './routes/userVerifyRoutes';
+import vnpayRoutes from './routes/vnpayRoutes';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use('/api/toppings', toppingRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/carts', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/vnpay', vnpayRoutes);
 app.use('/api/order-details', orderDetailRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/suppliers', supplierRoutes);
