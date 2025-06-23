@@ -53,10 +53,10 @@ const userSchema = new Schema<IUser>({
   lichSuDiem: [
     {
       thoiGian: { type: Date, default: Date.now },
-      diem: { type: Number, required: true },
-      noiDung: { type: String, required: true },
-      diemConLai: { type: Number, required: true },
-      loaiGiaoDich: { type: String, enum: Object.values(LoaiGiaoDich), required: true },
+      diem: { type: Number, required: false },
+      noiDung: { type: String, required: false },
+      diemConLai: { type: Number, required: false },
+      loaiGiaoDich: { type: String, enum: Object.values(LoaiGiaoDich), required: false },
     },
   ],
   diaChi: { type: String },

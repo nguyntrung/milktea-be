@@ -568,8 +568,8 @@ class StatisticIngredientService{
   }
 
   async getRevenueByDaysInMonth(month: number, year: number) {
-    const startDate = new Date(Date.UTC(year, month - 1, 1));
-    const endDate = new Date(Date.UTC(year, month, 1));
+    const startDate = new Date(year, month - 1, 1); // Ngày đầu tháng
+    const endDate = new Date(year, month, 1); 
 
     const result = await orderDetailModel.aggregate([
       {
@@ -624,9 +624,12 @@ class StatisticIngredientService{
   //Thống kê doanh thu & số lượng bán theo NGÀY
   // --------------------------------------------------------
   async getRevenueByDay(day: number, month: number, year: number) {
-    //Xác định ranh giới UTC của ngày
-    const startDate = new Date(Date.UTC(year, month - 1, day));
-    const endDate   = new Date(Date.UTC(year, month - 1, day + 1));
+    const localStart = new Date(year, month - 1, day, 0, 0, 0);
+    const localEnd   = new Date(year, month - 1, day, 23, 59, 59, 999);
+
+    const startDate = new Date(localStart.toISOString()); // = local time 00:00 converted to UTC
+    const endDate   = new Date(localEnd.toISOString());   // = local time 23:59:59.999 converted to UTC
+
 
     //Tính tổng doanh thu từ 'donhangs'
     const doanhThuAgg = await orderModel.aggregate([
